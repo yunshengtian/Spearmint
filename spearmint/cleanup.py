@@ -209,7 +209,7 @@ def cleanup(path, repeat=-1):
     if repeat >= 0: # only for advanced use
         experiment_name = repeat_experiment_name(experiment_name, repeat)
 
-    print 'Cleaning up experiment %s in database at %s' % (experiment_name, db_address)
+    print('Cleaning up experiment %s in database at %s' % (experiment_name, db_address))
 
     # db.remove_experiment(experiment_name) # does not work
     db.remove_collection(experiment_name, 'jobs')

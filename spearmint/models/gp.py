@@ -264,7 +264,7 @@ class GP(AbstractModel):
         # doing it the above way is worse-- because if you changed the config
         # to add hyperparameters, they won't be found in the hypers_dict. 
         # this way is more robust
-        for name, hyper in hypers_dict.iteritems():
+        for name, hyper in hypers_dict.items():
             if name in self.params:
                 self.params[name].value = hypers_dict[name]
 
@@ -272,7 +272,7 @@ class GP(AbstractModel):
         self._cache_list = list()
 
         # inputs_hash = hash(self.inputs.tostring())
-        for i in xrange(self.num_states):
+        for i in range(self.num_states):
             self.set_state(i)
             chol  = spla.cholesky(self.kernel.cov(self.inputs), lower=True)
             alpha = spla.cho_solve((chol, True), self.values - self.mean.value)
@@ -303,8 +303,8 @@ class GP(AbstractModel):
 
         for trans in self.options['transformations']:
             assert len(trans) == 1 # this is the convention-- a list of length-1 dicts
-            trans_class = trans.keys()[0]
-            trans_options = trans.values()[0]
+            trans_class = list(trans.keys())[0]
+            trans_options = list(trans.values())[0]
 
             T = getattr(transformations,trans_class)(self.num_dims, **trans_options)
             
@@ -354,7 +354,7 @@ class GP(AbstractModel):
 
         self.params['ls'] = input_kernel.hypers
 
-        toSample = self.params.values() # we don't want to copy the params, but we want to copy the list.
+        toSample = list(self.params.values()) # we don't want to copy the params, but we want to copy the list.
 
         amp2 = self.scaled_input_kernel.hypers
 
@@ -388,7 +388,7 @@ class GP(AbstractModel):
 
         logging.debug('  Burning %d samples...' % num_samples)
 
-        for i in xrange(num_samples):
+        for i in range(num_samples):
             # if self.options['verbose']:
                 # logging.debug('\b'*11+'%05d/%05d' % (i, num_samples))
             
@@ -408,7 +408,7 @@ class GP(AbstractModel):
             logging.debug('  Sampling %d samples of %s with %s' % (num_samples, ', '.join(['%s(%d)'%(param.name, param.size()) for param in sampler.params]), sampler.__class__.__name__))
         logging.debug('')
 
-        for i in xrange(num_samples):
+        for i in range(num_samples):
             for sampler in self._samplers:
                 sampler.sample(self)
 
@@ -419,7 +419,7 @@ class GP(AbstractModel):
 
     def _collect_fantasies(self, pending):
         fantasy_values_list = []
-        for i in xrange(self.num_states):
+        for i in range(self.num_states):
             self.set_state(i)
             fantasy_vals = self._fantasize(pending)
             if fantasy_vals.ndim == 1:
@@ -497,7 +497,7 @@ class GP(AbstractModel):
 
     def to_dict(self):
         gp_dict = {'hypers' : {}}
-        for name, hyper in self.params.iteritems():
+        for name, hyper in self.params.items():
             gp_dict['hypers'][name] = hyper.value
 
         # I don't understand why this is stored...? as soon as you call fit
@@ -511,7 +511,7 @@ class GP(AbstractModel):
         self.chain_length = gp_dict['chain length']
 
     def reset_params(self):
-        for param in self.params.values():
+        for param in list(self.params.values()):
             param.reset_value() # set to default
 
     # if fit_hypers is False, then we do not perform MCMC and use whatever we have
@@ -697,7 +697,7 @@ class GP(AbstractModel):
     # sampling y from p(y | theta)
     def sample_from_prior(self, pred, n_samples=1, joint=True):
         fants = np.zeros((pred.shape[0], n_samples))
-        for i in xrange(n_samples):
+        for i in range(n_samples):
             for param in self.params:
                 param.sample_from_prior() # sample from hyperpriors and set value
             fants[:,i] = self.sample_from_prior_given_hypers(pred, joint)
@@ -720,7 +720,7 @@ class GP(AbstractModel):
     # sampling y from p(y | theta, data)
     def sample_from_posterior_given_data(self, pred, n_samples=1, joint=True):
         fants = np.zeros((pred.shape[0], n_samples))
-        for i in xrange(n_samples):
+        for i in range(n_samples):
             # Sample theta from p(theta | data)
             self.generate_sample(1)
             # Sample y from p(y | theta, data)

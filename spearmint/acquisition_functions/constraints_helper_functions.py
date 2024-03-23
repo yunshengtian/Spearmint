@@ -186,6 +186,7 @@ import numpy          as np
 import numpy.random   as npr
 import scipy.linalg   as spla
 import numpy.linalg   as npla
+from functools import reduce
 
 def constraint_confidence(model, x, compute_grad=False):
     return model.pi(x, compute_grad=compute_grad)
@@ -208,9 +209,9 @@ def total_constraint_confidence(constraint_models, x, compute_grad=False):
     else:
         # To compute the gradient, need to do the chain rule for the product of N factors
         p_grad_prod = np.zeros(p_grad[0].shape)
-        for i in xrange(len(constraint_models)):
+        for i in range(len(constraint_models)):
             pg = p_grad[i]
-            for j in xrange(len(constraint_models)):
+            for j in range(len(constraint_models)):
                 if j == i:
                     continue
                 pg *= p_valid[j]
@@ -244,9 +245,9 @@ def total_constraint_confidence_over_hypers(constraint_models, x, compute_grad=F
     else:
         # To compute the gradient, need to do the chain rule for the product of N factors
         p_grad_prod = np.zeros(p_grad[0].shape)
-        for i in xrange(len(constraint_models)):
+        for i in range(len(constraint_models)):
             pg = p_grad[i]
-            for j in xrange(len(constraint_models)):
+            for j in range(len(constraint_models)):
                 if j == i:
                     continue
                 pg *= p_valid[j]

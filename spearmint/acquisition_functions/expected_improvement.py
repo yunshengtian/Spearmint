@@ -393,12 +393,12 @@ class ExpectedImprovement(AbstractAcquisitionFunction):
         and the constraint-weighted EI when there are constraints. """
     def create_acquisition_function(self, objective_model_dict, constraint_models_dict, current_best, **kwargs):
 
-        objective_model = objective_model_dict.values()[0]
+        objective_model = list(objective_model_dict.values())[0]
         if len(constraint_models_dict) == 0:
             return lambda cand, compute_grad, **kwargs: compute_ei(objective_model, cand, 
                 ei_target=current_best, compute_grad=compute_grad)
         else:
-            return lambda cand, compute_grad, **kwargs: constraint_weighted_ei(objective_model, constraint_models_dict.values(), cand, current_best, compute_grad)
+            return lambda cand, compute_grad, **kwargs: constraint_weighted_ei(objective_model, list(constraint_models_dict.values()), cand, current_best, compute_grad)
 
 
 class ConstraintAndMean(AbstractAcquisitionFunction):
@@ -411,4 +411,4 @@ class ConstraintAndMean(AbstractAcquisitionFunction):
  suffers from the chicken and egg pathology for decoupled constraints.
  It's good if the objective is known and the constraint is unknown  """
     def create_acquisition_function(self, objective_model, constraint_models_dict, current_best):
-        return lambda cand, compute_grad, **kwargs: ei_evaluate_constraint_only(objective_model, constraint_models_dict.values(), cand, current_best, compute_grad)
+        return lambda cand, compute_grad, **kwargs: ei_evaluate_constraint_only(objective_model, list(constraint_models_dict.values()), cand, current_best, compute_grad)

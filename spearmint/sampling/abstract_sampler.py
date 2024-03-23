@@ -188,9 +188,7 @@ from abc import ABCMeta, abstractmethod
 from ..utils import param as hyperparameter_utils
 import numpy as np
 
-class AbstractSampler(object):
-    __metaclass__ = ABCMeta
-
+class AbstractSampler(object, metaclass=ABCMeta):
     def __init__(self, *params_to_sample, **sampler_options):
         self.params          = params_to_sample
         self.sampler_options = sampler_options

@@ -36,15 +36,15 @@ def main(expt_dir, n_repeat):
     else:
         repeat_flag = True
     options  = parse_config_file(expt_dir, 'config.json')
-    tasks    = options['tasks'].keys()
+    tasks    = list(options['tasks'].keys())
 
     # Get all the jobs in once place, and store all the wall times
     jobs = dict()
     start_times = np.zeros(n_repeat)
-    for j in xrange(n_repeat):
+    for j in range(n_repeat):
         # get experiment name
         experiment_name = options["experiment_name"]
-        print "Loaded experiment %s" % experiment_name
+        print("Loaded experiment %s" % experiment_name)
         if repeat_flag:
             experiment_name = repeat_experiment_name(experiment_name, j)
         # get db
@@ -63,30 +63,30 @@ def main(expt_dir, n_repeat):
             if loaded_job['status'] == 'complete':
                 jobs[j].append(loaded_job)
     print(start_times)
-    print experiment_name
+    print(experiment_name)
     wall_times = list()
-    for j in xrange(n_repeat):
+    for j in range(n_repeat):
         # get elapsed wall times
         wall_times.append(np.zeros(len(jobs[j])))
-        for i in xrange(len(jobs[j])):
+        for i in range(len(jobs[j])):
             wall_times[j][i] = (jobs[j][i]['end time'] - start_times[j])/60.0
 
     # set up the time bins
     bin_size = 1.0
-    end_times = map(max, wall_times)
-    for j in xrange(n_repeat):
-        print 'end time for repeat %d: %f' % (j, end_times[j])
+    end_times = list(map(max, wall_times))
+    for j in range(n_repeat):
+        print('end time for repeat %d: %f' % (j, end_times[j]))
     timesteps = np.arange(0.0,np.round(max(end_times))+bin_size, bin_size)
-    print timesteps
+    print(timesteps)
     # get the number of evals
     cum_evals = dict()
-    for j in xrange(n_repeat):
+    for j in range(n_repeat):
         cum_evals[j] = dict()
 
         for task in tasks:
             
             evals = np.zeros(len(timesteps))
-            for i in xrange(len(jobs[j])):
+            for i in range(len(jobs[j])):
 
                 if jobs[j][i]['end time'] is None:
                     raise Exception("Job does not have end time. Maybe it is currently running?")
@@ -108,10 +108,10 @@ def main(expt_dir, n_repeat):
     avg_evals = defaultdict(lambda: np.zeros(len(timesteps)))
     err_evals = defaultdict(lambda: np.zeros(len(timesteps)))
     # average over the j repeats
-    for i in xrange(len(timesteps)):
+    for i in range(len(timesteps)):
         for task in tasks:
-            avg_evals[task][i] = np.mean([cum_evals[j][task][i] for j in xrange(n_repeat)])
-            err_evals[task][i] =  np.std([cum_evals[j][task][i] for j in xrange(n_repeat)])
+            avg_evals[task][i] = np.mean([cum_evals[j][task][i] for j in range(n_repeat)])
+            err_evals[task][i] =  np.std([cum_evals[j][task][i] for j in range(n_repeat)])
 
     plt.figure()
     linestyles = ['solid','dashed','dashdot','dotted'] #  ['-' | '--' | '-.' | ':' | 'None' | ' ' | '']
@@ -133,7 +133,7 @@ def main(expt_dir, n_repeat):
     if not os.path.isdir(plots_dir):
         os.mkdir(plots_dir)
     figname = os.path.join(plots_dir, 'cumulative_evals_wall_time')
-    print 'Saving figure at %s' % figname
+    print('Saving figure at %s' % figname)
     plt.savefig(figname + '.pdf')
     plt.savefig(figname + '.svg')
 

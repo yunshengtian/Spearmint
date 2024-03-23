@@ -197,6 +197,7 @@ import hashlib
 import logging
 
 import numpy as np
+from functools import reduce
 
 # np.random.seed(1)
 
@@ -275,7 +276,7 @@ def main(expt_dir, config_file="config.json", no_output=False, repeat=-1):
     waiting_for_results = False  # for printing purposes only
     while True:
 
-        for resource_name, resource in resources.iteritems():
+        for resource_name, resource in resources.items():
 
             jobs = load_jobs(db, experiment_name)
             # resource.printStatus(jobs)
@@ -339,7 +340,7 @@ def main(expt_dir, config_file="config.json", no_output=False, repeat=-1):
                 # Get the decoupling groups
                 task_couplings = {task_name : tasks[task_name].options["group"] for task_name in resource.tasks}
 
-                logging.info('\nGetting suggestion for %s...\n' % (', '.join(task_couplings.keys())))
+                logging.info('\nGetting suggestion for %s...\n' % (', '.join(list(task_couplings.keys()))))
 
                 # Get the next suggested experiment from the chooser.
                 suggested_input, suggested_tasks = chooser.suggest(task_couplings)
@@ -383,10 +384,10 @@ def main(expt_dir, config_file="config.json", no_output=False, repeat=-1):
 
                 # Print out the status of the resources
                 # resource.printStatus(jobs)
-                print_resources_status(resources.values(), jobs)
+                print_resources_status(list(resources.values()), jobs)
 
                 if len(set(task_couplings.values())) > 1: # if decoupled
-                    print_tasks_status(tasks.values(), jobs)
+                    print_tasks_status(list(tasks.values()), jobs)
 
                 # For debug - print pending jobs
                 print_pending_jobs(jobs)
@@ -395,8 +396,8 @@ def main(expt_dir, config_file="config.json", no_output=False, repeat=-1):
         # or ANY task is finished (just my weird convention)
         jobs = load_jobs(db, experiment_name)
         tasks = parse_tasks_from_jobs(jobs, experiment_name, options, input_space)
-        terminate_resources = reduce(lambda x,y: x and y, map(lambda x: x.maxCompleteReached(jobs), resources.values()), True)
-        terminate_tasks     = reduce(lambda x,y: x or y,  map(lambda x: x.maxCompleteReached(jobs), tasks.values()),     False)
+        terminate_resources = reduce(lambda x,y: x and y, [x.maxCompleteReached(jobs) for x in list(resources.values())], True)
+        terminate_tasks     = reduce(lambda x,y: x or y,  [x.maxCompleteReached(jobs) for x in list(tasks.values())],     False)
         terminate_maxtime   = (time.time()-overall_start_time) >= (options['max_time_mins']*60.0)
         
         if terminate_resources or terminate_tasks or terminate_maxtime:
@@ -417,7 +418,7 @@ def main(expt_dir, config_file="config.json", no_output=False, repeat=-1):
             elif options['recommendations'] == "end-all":
                 logging.info('Making recommendations...')
                 all_jobs = jobs
-                for i in xrange(len(all_jobs)):
+                for i in range(len(all_jobs)):
                     logging.info('')
                     logging.info('-------------------------------------------------')
                     logging.info('     Getting recommendations for iter %d/%d      ' % (i, len(all_jobs)) )
@@ -458,15 +459,15 @@ def store_recommendation(recommendation, db, experiment_name, tasks, jobs, input
     elif isinstance(stored_recs, dict):
         previous_total_num_complete = 1
     else:
-        previous_total_num_complete = max(map(lambda x: x['num_complete'], stored_recs))
+        previous_total_num_complete = max([x['num_complete'] for x in stored_recs])
     
-    total_num_complete = sum(map(lambda x: x['status'] == 'complete', jobs)) # over all resources
+    total_num_complete = sum([x['status'] == 'complete' for x in jobs]) # over all resources
     
     while total_num_complete > previous_total_num_complete or final:
         logging.debug('Storing recommendation %d.' % previous_total_num_complete)
         
         db.save({'num_complete' : total_num_complete, 
-             'num_complete_tasks' : {task_name : task.numComplete(jobs) for task_name, task in tasks.iteritems()},
+             'num_complete_tasks' : {task_name : task.numComplete(jobs) for task_name, task in tasks.items()},
              'params'   : input_space.paramify(recommendation['model_model_input']), 
              'objective': recommendation['model_model_value'],
              'params_o' : None if recommendation['obser_obser_input'] is None else input_space.paramify(recommendation['obser_obser_input']),
@@ -500,7 +501,7 @@ def store_recommendation(recommendation, db, experiment_name, tasks, jobs, input
 # Is it the case that no resources are accepting jobs?
 def no_free_resources(db, experiment_name, resources):
     jobs = load_jobs(db, experiment_name)
-    for resource_name, resource in resources.iteritems():
+    for resource_name, resource in resources.items():
         if resource.acceptingJobs(jobs):
             return False
     return True
@@ -525,7 +526,7 @@ def print_broken_jobs(jobs):
         if job['status'] == 'broken':
             broken_jobs[', '.join(job['tasks'])].append(str(job['id']))
 
-    for task_names_broken, broken_id_list in broken_jobs.iteritems():
+    for task_names_broken, broken_id_list in broken_jobs.items():
         logging.info('** Failed jobs(s) for %s: %s\n' % (task_names_broken, ', '.join(broken_id_list)))
 
 def print_pending_jobs(jobs):
@@ -534,24 +535,24 @@ def print_pending_jobs(jobs):
         if job['status'] == 'pending':
             pending_jobs[', '.join(job['tasks'])].append(str(job['id']))
 
-    for task_names_pending, pending_id_list in pending_jobs.iteritems():
+    for task_names_pending, pending_id_list in pending_jobs.items():
         logging.info('ID(s) of pending job(s) for %s: %s' % (task_names_pending, ', '.join(pending_id_list)))
 
 
 def print_hypers(hypers, input_space, options):
-    for task_name, stored_dict in hypers.iteritems():
+    for task_name, stored_dict in hypers.items():
         if task_name == 'duration hypers':
             continue
         logging.debug(task_name)
         if 'latent values' in stored_dict:
-            logging.debug('   Latent values: %s' % ', '.join(map(lambda x: '%.04f'%x, stored_dict['latent values'].values())))
-        for hyper_name, hyper_value in stored_dict['hypers'].iteritems():
+            logging.debug('   Latent values: %s' % ', '.join(['%.04f'%x for x in list(stored_dict['latent values'].values())]))
+        for hyper_name, hyper_value in stored_dict['hypers'].items():
             # special printing for length scales, to show the dimension names
             if hyper_name == 'ls':
                 logging.debug('   length scales:')
 
                 length_scales = input_space.paramify(hyper_value)
-                for param_name, length_scale in length_scales.iteritems():
+                for param_name, length_scale in length_scales.items():
                     logging.debug("      %-15.15s : %s" % (param_name, ', '.join(map(str, length_scale['values']))))
                 # logging.debug('')
             else:

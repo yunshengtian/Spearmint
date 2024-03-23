@@ -264,13 +264,13 @@ class Task(object):
         if not jobs:
             return 0
 
-        return len(filter(lambda job: self.name in job['tasks'] and job['status']=='complete', jobs))
+        return len([job for job in jobs if self.name in job['tasks'] and job['status']=='complete'])
 
     def numPending(self, jobs):
         if not jobs:
             return 0
 
-        return len(filter(lambda job: self.name in job['tasks'] and job['status']=='pending', jobs))
+        return len([job for job in jobs if self.name in job['tasks'] and job['status']=='pending'])
 
 
     def maxCompleteReached(self, jobs):

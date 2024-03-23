@@ -186,8 +186,8 @@ import copy
 
 import numpy as np
 
-import priors
-from compression import compress_array
+from . import priors
+from .compression import compress_array
 
 # Update the params in params_iterable with the new values stored in params_array
 def set_params_from_array(params_iterable, params_array):
@@ -247,13 +247,13 @@ class Param(object):
             return self.value
 
     def size(self):
-    	try:
+        try:
             return self.value.size
         except:
             return 1
 
     def prior_logprob(self):
-    	return self.prior.logprob(self.value)
+        return self.prior.logprob(self.value)
 
     # For MCMC diagnostics -- or maybe will be used for initialization at some point
     def sample_from_prior(self):
@@ -271,6 +271,6 @@ class Param(object):
 
     def print_diagnostics(self):
         if self.size() == 1:
-        	print '    %s: %s' % (self.name, self.value)
+            print('    %s: %s' % (self.name, self.value))
         else:
-        	print '    %s: min=%s, max=%s (size=%d)' % (self.name, self.value.min(), self.value.max(), self.size())
+            print('    %s: min=%s, max=%s (size=%d)' % (self.name, self.value.min(), self.value.max(), self.size()))

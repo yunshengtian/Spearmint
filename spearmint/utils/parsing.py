@@ -200,14 +200,14 @@ import importlib
 from spearmint.tasks.task         import Task
 from spearmint.resources.resource import Resource
 from spearmint.utils.priors       import *
+from functools import reduce
 
 # For converting a string of args into a dict of args
 # (one could then call parse_args on the output)
 def unpack_args(str):
     if len(str) > 1:
         eq_re = re.compile("\s*=\s*")
-        return dict(map(lambda x: eq_re.split(x),
-                        re.compile("\s*,\s*").split(str)))
+        return dict([eq_re.split(x) for x in re.compile("\s*,\s*").split(str)])
     else:
         return {}
             
@@ -328,7 +328,7 @@ DEFAULTS.update(GP_CLASSIFIER_OPTION_DEFAULTS)
 def change_to_underscore(d):
     # change all hypens spaces to underscores
     d_copy = d.copy()
-    for opt, val in d.iteritems():
+    for opt, val in d.items():
         opt_new = opt.replace(" ", "_")
         opt_new = opt_new.replace("-", "_")
         del d_copy[opt]
@@ -338,7 +338,7 @@ DEFAULTS = change_to_underscore(DEFAULTS)
 
 def parse_true_false_strings(d):
     for opt in d:
-        if isinstance(d[opt], basestring):
+        if isinstance(d[opt], str):
             if d[opt].lower() == "false":
                 d[opt] = False
             elif d[opt].lower() == "true":
@@ -413,7 +413,7 @@ def parse_config(options, verbose=False, update_options=None):
             'likelihood' : options.get('likelihood', DEFAULTS['likelihood']) }
 
         if 'num_constraints' in options:
-            for i in xrange(int(options['num_constraints'])):
+            for i in range(int(options['num_constraints'])):
                 options['tasks']['%s%d' % (DEFAULTS['constraint_name'], i)] = {
                     'type'       : 'CONSTRAINT', 
                     'likelihood' : options.get('likelihood', DEFAULTS['likelihood']) }
@@ -423,15 +423,15 @@ def parse_config(options, verbose=False, update_options=None):
         options["acquisition"] = 'ExpectedImprovement'
 
     """ stick all top-level options in all the task options if they are not already there """
-    for opt_name, opt in options.iteritems():
-        for task_name, task_opt in options['tasks'].iteritems():
+    for opt_name, opt in options.items():
+        for task_name, task_opt in options['tasks'].items():
             if opt_name not in task_opt:
                 if opt_name not in ["tasks", "resources", "variables"]:
                     task_opt[opt_name] = copy.copy(opt)
                     # the copying is no longer needed, probably
 
     # Turn off warping and fit_mean if you are using PES
-    for task_name, task_opts in options['tasks'].iteritems():
+    for task_name, task_opts in options['tasks'].items():
         # If you are using PES, turn off transformations!!
         if task_opts["acquisition"] == "PES":
             if task_opts['transformations'] != []:
@@ -472,9 +472,9 @@ def parse_config(options, verbose=False, update_options=None):
     
     # print out stuff about the tasks    
     if verbose:
-        for task_name, task_opts in options['tasks'].iteritems():
+        for task_name, task_opts in options['tasks'].items():
             logging.debug('Found Task "%s"' % task_name)
-            for task_opt_name, task_opt_val in task_opts.iteritems():
+            for task_opt_name, task_opt_val in task_opts.items():
                 logging.debug('  %-18s: %s' % (task_opt_name, task_opt_val))
             logging.debug('')
 
@@ -483,7 +483,7 @@ def parse_config(options, verbose=False, update_options=None):
 def get_objectives_and_constraints(config):
     obj = list()
     con = list()
-    for task_name, task_opt in config["tasks"].iteritems():
+    for task_name, task_opt in config["tasks"].items():
         if task_opt['type'].lower()=='objective':
             obj.append(task_name)
         elif task_opt['type'].lower()=='constraint':
@@ -500,7 +500,7 @@ def parse_resources_from_config(config):
         config["resources"] = {DEFAULTS["resource_name"] : config}
 
     resources = dict()
-    for resource_name, resource_opts in config["resources"].iteritems():
+    for resource_name, resource_opts in config["resources"].items():
         tasks = _parse_tasks_in_resource_from_config(resource_name, config)
 
         scheduler_class  = resource_opts.get("scheduler", DEFAULTS['scheduler'])
@@ -528,7 +528,7 @@ def _parse_tasks_in_resource_from_config(resource_name, config):
 
 
     tasks = list()
-    for task_name, task_config in config["tasks"].iteritems():
+    for task_name, task_config in config["tasks"].items():
         # If the user specified tasks but not specific resources for those tasks,
         # We have to assume the tasks run on all resources...
         if "resources" not in task_config:
@@ -568,20 +568,20 @@ class HashableInput(object):
     def __eq__(self, other):
         return np.array_equal(self.x, other.x)
 def HashableInputsToArray(HIs):
-    return np.array(map(lambda x:x.x, HIs))
+    return np.array([x.x for x in HIs])
 
 def parse_tasks_from_jobs(jobs, experiment_name, options, input_space):
     tasks_config = options["tasks"]
 
     # Create all the tasks
     tasks = dict()
-    for task_name, task_options in tasks_config.iteritems():
+    for task_name, task_options in tasks_config.items():
         if task_options['type'].lower() != 'ignore':
             tasks[task_name] = Task(task_name, task_options, input_space.num_dims)
 
     if jobs:
 
-        for task_name, task in tasks.iteritems():
+        for task_name, task in tasks.items():
 
             for job in jobs:
 
@@ -618,7 +618,7 @@ def parse_tasks_from_jobs(jobs, experiment_name, options, input_space):
         del tasks['NaN']
 
     # if any task has NaN values in it, create the special task
-    if reduce(lambda x,y:x or y,map(lambda x:np.any(np.isnan(x.values)), tasks.values()), False):
+    if reduce(lambda x,y:x or y,[np.any(np.isnan(x.values)) for x in list(tasks.values())], False):
 
         # First, see if all the tasks currently in this group are noiseless
         # If so, we should make the NaN task noiseless also
@@ -634,8 +634,8 @@ def parse_tasks_from_jobs(jobs, experiment_name, options, input_space):
         if options["acquisition"] == "PES":
             # in some cases, for example with PESC, you may not want to use a GP classifier to a NaN task
             # thus use a regular GP here and map {0,1} to {-1,1}
-            nan_task_inputs = tasks.values()[0].inputs
-            nan_task_values = np.logical_not(reduce(np.logical_or, map(np.isnan, [task.values for task in tasks.values()])))
+            nan_task_inputs = list(tasks.values())[0].inputs
+            nan_task_values = np.logical_not(reduce(np.logical_or, list(map(np.isnan, [task.values for task in list(tasks.values())]))))
             nan_task_values = nan_task_values*2.0 - 1.0
 
             nan_likelihood = "noiseless" if all_noiseless else "gaussian" 
@@ -670,8 +670,8 @@ def parse_tasks_from_jobs(jobs, experiment_name, options, input_space):
             #     nan_task_values[i] = valids[inp]
 
             # coupled only---!!!
-            nan_task_inputs = tasks.values()[0].inputs
-            nan_task_values = np.logical_not(reduce(np.logical_or, map(np.isnan, [task.values for task in tasks.values()])))
+            nan_task_inputs = list(tasks.values())[0].inputs
+            nan_task_values = np.logical_not(reduce(np.logical_or, list(map(np.isnan, [task.values for task in list(tasks.values())]))))
 
         # what a mess...
         nan_task_options = dict()
@@ -686,7 +686,7 @@ def parse_tasks_from_jobs(jobs, experiment_name, options, input_space):
 
         # make sure the options are sorted out, just like the other tasks
 
-        for opt_name, opt in options.iteritems():
+        for opt_name, opt in options.items():
             if opt_name not in nan_task_options:
                     if opt_name not in ["tasks", "resources", "variables"]:
                         nan_task_options[opt_name] = opt

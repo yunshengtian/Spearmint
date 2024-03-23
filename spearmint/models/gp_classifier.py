@@ -191,7 +191,7 @@ import scipy.linalg      as spla
 import scipy.optimize    as spo
 import scipy.io          as sio
 import scipy.stats       as sps
-import scipy.weave
+import weave
 from collections import defaultdict
 
 from .gp                                     import GP
@@ -210,7 +210,7 @@ try:
     log    = logging.getLogger(module)
 except:
     log = logging.getLogger()
-    print 'Not running from main.'
+    print('Not running from main.')
 
 # I intentionally do not make this options a property of the class, because I don't
 # want to override the defaults of the GP class that I am inheriting from. Instead,
@@ -286,7 +286,7 @@ class GPClassifier(GP):
         default_latent_values = self.counts/self.options['binomial_trials'] - 0.5
 
         latent_values = np.zeros(self._inputs.shape[0])
-        for i in xrange(self._inputs.shape[0]):
+        for i in range(self._inputs.shape[0]):
             key = str(hash(self._inputs[i].tostring()))
             
             if key in latent_values_dict:
@@ -300,12 +300,12 @@ class GPClassifier(GP):
         if num_samples == 0:
             return
 
-        print '  Burning %d samples...' % num_samples
+        print('  Burning %d samples...' % num_samples)
 
         if self.options['verbose']:
-            sys.stderr.write('GPClassifer: burning %s: ' % ', '.join(self.params.keys()))
+            sys.stderr.write('GPClassifer: burning %s: ' % ', '.join(list(self.params.keys())))
             sys.stderr.write('%05d/%05d' % (0, num_samples))
-        for i in xrange(num_samples):
+        for i in range(num_samples):
             if self.options['verbose']:
                 sys.stderr.write('\b'*11+'%05d/%05d' % (i, num_samples))
             
@@ -325,17 +325,17 @@ class GPClassifier(GP):
     def _collect_samples(self, num_samples):
         
         for sampler in self._samplers:
-            print '  Sampling %d samples of %s with %s' % (num_samples, ', '.join(['%s(%d)'%(param.name, param.size()) for param in sampler.params]), sampler.__class__.__name__)
-        print '  Sampling latent values (size %d) with %s' % (self.latent_values.size(), self.latent_values_sampler.__class__.__name__)
+            print('  Sampling %d samples of %s with %s' % (num_samples, ', '.join(['%s(%d)'%(param.name, param.size()) for param in sampler.params]), sampler.__class__.__name__))
+        print('  Sampling latent values (size %d) with %s' % (self.latent_values.size(), self.latent_values_sampler.__class__.__name__))
                 
 
         if self.options['verbose']:    
-            sys.stderr.write('GPClassifer: sampling %s: ' % ', '.join(self.params.keys()))
+            sys.stderr.write('GPClassifer: sampling %s: ' % ', '.join(list(self.params.keys())))
             sys.stderr.write('%05d/%05d' % (0, num_samples))
         
         hypers_list        = []
         latent_values_list = []
-        for i in xrange(num_samples):
+        for i in range(num_samples):
             if self.options['verbose']:
                 sys.stderr.write('\b'*11+'%05d/%05d' % (i, num_samples))
             for sampler in self._samplers:
@@ -373,8 +373,8 @@ class GPClassifier(GP):
 
         for trans in self.options['transformations']:
             assert len(trans) == 1 # this is the convention-- a list of length-1 dicts
-            trans_class = trans.keys()[0]
-            trans_options = trans.values()[0]
+            trans_class = list(trans.keys())[0]
+            trans_options = list(trans.values())[0]
             T = getattr(transformations,trans_class)(self.num_dims, **trans_options)
             transformer.add_layer(T)
             self.params.update({param.name:param for param in T.hypers})
@@ -414,9 +414,9 @@ class GPClassifier(GP):
 
 
         if self.options['prior_whitening']:
-            self._samplers.append(WhitenedPriorSliceSampler(*self.params.values(), compwise=True, thinning=self.options['thinning']))
+            self._samplers.append(WhitenedPriorSliceSampler(*list(self.params.values()), compwise=True, thinning=self.options['thinning']))
         else:
-            self._samplers.append(SliceSampler(*self.params.values(), compwise=True, thinning=self.options['thinning']))
+            self._samplers.append(SliceSampler(*list(self.params.values()), compwise=True, thinning=self.options['thinning']))
 
         # Build the mean function (just a constant mean for now)
         self.mean = Hyperparameter(
@@ -500,14 +500,14 @@ class GPClassifier(GP):
         gp_dict = {}
 
         gp_dict['hypers'] = {}
-        for name, hyper in self.params.iteritems():
+        for name, hyper in self.params.items():
             gp_dict['hypers'][name] = hyper.value
 
         # Save the latent values as a dict with keys as hashes of the data
         # so that each latent value is associated with its input
         # then when we load them in we know which ones are which
         gp_dict['latent values'] = {str(hash(self._inputs[i].tostring())) : self.latent_values.value[i] 
-                for i in xrange(self._inputs.shape[0])}
+                for i in range(self._inputs.shape[0])}
 
         gp_dict['chain length'] = self.chain_length
 

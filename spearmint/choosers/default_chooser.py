@@ -204,6 +204,7 @@ from spearmint                       import models
 from spearmint                       import acquisition_functions
 from spearmint.acquisition_functions.constraints_helper_functions import constraint_confidence_over_hypers, total_constraint_confidence_over_hypers
 from spearmint.utils.parsing         import GP_OPTION_DEFAULTS
+from functools import reduce
 
 
 
@@ -286,7 +287,7 @@ class DefaultChooser(object):
         # it checks if there is anything stored here in case best() was already
         # called explicity. So, we need to make sure best is called again if needed!
 
-        for task_name, task in tasks.iteritems():
+        for task_name, task in tasks.items():
             if task.type.lower() == 'objective':
                 self.objective = task
             elif task.type.lower() == 'constraint':
@@ -297,7 +298,7 @@ class DefaultChooser(object):
         hypers = hypers if hypers is not None else defaultdict(dict)
 
         # Find the total number of samples across tasks, and do not fit if less than self.options['initial design size']
-        self.total_inputs = reduce(lambda x,y:x+y,map(lambda t: t._inputs.shape[0], self.tasks.values()), 0)
+        self.total_inputs = reduce(lambda x,y:x+y,[t._inputs.shape[0] for t in list(self.tasks.values())], 0)
         if self.total_inputs < self.options['initial_design_size']:
             return hypers
 
@@ -321,7 +322,7 @@ class DefaultChooser(object):
         else:
             self.start_time_of_last_slow_update = time.time() # for scale-duration
 
-        for task_name, task in tasks.iteritems():
+        for task_name, task in tasks.items():
             inputs  = task.valid_normalized_inputs(self.input_space)
 
             if self.options['normalize_outputs']:
@@ -432,7 +433,7 @@ class DefaultChooser(object):
         # use a random seed for the grid. but don't let it get too large or it will
         # be slow to generate. pick between 0 and grid size, so it only takes 2x time
         grid = sobol_grid.generate(self.num_dims, grid_size=grid_size, grid_seed=npr.randint(0, grid_size))
-        for task_name, task in self.tasks.iteritems():
+        for task_name, task in self.tasks.items():
             if task.has_valid_inputs():
                 grid = np.append(grid, self.input_space.to_unit(task.valid_inputs), axis=0)
             if task.has_pending():
@@ -469,7 +470,7 @@ class DefaultChooser(object):
         if not isinstance(task_couplings, dict):
             task_couplings = {task_name : 0 for task_name in task_couplings}
 
-        task_names = task_couplings.keys()
+        task_names = list(task_couplings.keys())
 
         # Indeed it does not make sense to compute the best() and all that if we
         # have absolutely no data. 
@@ -481,7 +482,7 @@ class DefaultChooser(object):
         if self.total_inputs < self.options['initial_design_size']:
             # design_index = npr.randint(0, grid.shape[0])
             # suggestion = self.input_space.from_unit(grid[design_index])
-            total_pending = sum(map(lambda t: t.pending.shape[0], self.tasks.values()))
+            total_pending = sum([t.pending.shape[0] for t in list(self.tasks.values())])
             # i use pending as the grid seed so that you don't suggest the same thing over and over
             # when you have multiple cores -- cool. this was probably weird on the 3 core thing
             suggestion = sobol_grid.generate(self.num_dims, grid_size=100, grid_seed=total_pending)[0]
@@ -537,7 +538,7 @@ class DefaultChooser(object):
 
         # flip the data structure of task couplings
         task_groups = defaultdict(list)
-        for task_name, group in task_couplings.iteritems():
+        for task_name, group in task_couplings.items():
             task_groups[group].append(task_name)
         # ok, now task_groups is a dict with keys being the group number and the
         # values being lists of tasks
@@ -546,7 +547,7 @@ class DefaultChooser(object):
         # the dict for tasks and the summing could happen out here, but that's ok
         # since not all acquisition functions might be able to do that
         task_acqs = dict()
-        for group, task_group in task_groups.iteritems():
+        for group, task_group in task_groups.items():
             task_acqs[group] = self.compute_acquisition_function(acquisition_function, acq_grid, task_group, fast_update)
         # Now task_acqs is a dict, with keys being the arbitrary group index, and the values
         # being a dict with keys "location" and "value"
@@ -554,7 +555,7 @@ class DefaultChooser(object):
 
         # normalize things by the costs
         group_costs = dict()
-        for task_name, group in task_couplings.iteritems():
+        for task_name, group in task_couplings.items():
             if self.options['scale_duration']:
 
                 # scale the acquisition function by the expected duration of the task
@@ -615,8 +616,8 @@ class DefaultChooser(object):
                 group_costs[group] = self.tasks[task_name].options["cost"]
 
         # This is where tasks compete
-        if len(task_groups.keys()) > 1: # if there is competitive decoupling, do this -- it would be fine anyway, but i don't want it to print stuff
-            for group, best_acq in task_acqs.iteritems():
+        if len(list(task_groups.keys())) > 1: # if there is competitive decoupling, do this -- it would be fine anyway, but i don't want it to print stuff
+            for group, best_acq in task_acqs.items():
                 best_acq["value"] /= group_costs[group]
                 if group_costs[group] != 1:
                     logging.debug("Scaling best acq for %s by a %s factor of 1/%f, from %f to %f" % ( \
@@ -631,7 +632,7 @@ class DefaultChooser(object):
         # Now, we need to find the task with the max acq value
         max_acq_value = -np.inf
         best_group = None
-        for group, best_acq in task_acqs.iteritems():
+        for group, best_acq in task_acqs.items():
             if best_acq["value"] > max_acq_value:
                 best_group = group
                 max_acq_value = best_acq["value"]
@@ -678,7 +679,7 @@ class DefaultChooser(object):
         avg_hypers = function_over_hypers
 
         # Compute the acquisition function on the grid
-        grid_acq = avg_hypers(self.models.values(), acquisition_function,
+        grid_acq = avg_hypers(list(self.models.values()), acquisition_function,
                                         grid, compute_grad=False, tasks=tasks)
 
         # The index and value of the top grid point
@@ -691,7 +692,7 @@ class DefaultChooser(object):
         if self.options['optimize_acq']:
 
             if self.options['check_grad']:
-                check_grad(lambda x: avg_hypers(self.models.values(), acquisition_function, 
+                check_grad(lambda x: avg_hypers(list(self.models.values()), acquisition_function, 
                     x, compute_grad=True), best_acq_location)
 
             if nlopt_imported:
@@ -710,11 +711,11 @@ class DefaultChooser(object):
                         x = x[None,:]
 
                     if put_gradient_here.size > 0:
-                        a, a_grad = avg_hypers(self.models.values(), acquisition_function, 
+                        a, a_grad = avg_hypers(list(self.models.values()), acquisition_function, 
                                 x, compute_grad=True, tasks=tasks)
                         put_gradient_here[:] = a_grad.flatten()
                     else:
-                        a = avg_hypers(self.models.values(), acquisition_function,
+                        a = avg_hypers(list(self.models.values()), acquisition_function,
                                 x, compute_grad=False, tasks=tasks)
 
                     return float(a)
@@ -746,7 +747,7 @@ class DefaultChooser(object):
                     def f(x):
                         if x.ndim == 1:
                             x = x[None,:]
-                        a, a_grad = avg_hypers(self.models.values(), acquisition_function, 
+                        a, a_grad = avg_hypers(list(self.models.values()), acquisition_function, 
                                     x, compute_grad=True, tasks=tasks)
                         return (-a.flatten(), -a_grad.flatten())
                 else:
@@ -754,7 +755,7 @@ class DefaultChooser(object):
                         if x.ndim == 1:
                             x = x[None,:]
 
-                        a = avg_hypers(self.models.values(), acquisition_function, 
+                        a = avg_hypers(list(self.models.values()), acquisition_function, 
                                     x, compute_grad=False, tasks=tasks)
 
                         return -a.flatten()
@@ -825,7 +826,7 @@ class DefaultChooser(object):
         # (The last one is weird and intended for cases where the objective isn't noisy but the constraint is)
 
 
-        self.total_inputs = sum(map(lambda t: t._inputs.shape[0], self.tasks.values()))
+        self.total_inputs = sum([t._inputs.shape[0] for t in list(self.tasks.values())])
         if self.total_inputs < self.options['initial_design_size']:
             # If there is not enough data, just return something random...
             random_rec = npr.rand(1,self.num_dims)
@@ -1087,7 +1088,7 @@ class DefaultChooser(object):
         best_total_probs_value = total_constraint_confidence_over_hypers(self.constraint_models, best_probs_location, compute_grad=False)
         logging.info('Maximum total probability of satisfying constraints = %.5f' % best_total_probs_value)
 
-        for c, model in self.constraint_models_dict.iteritems():
+        for c, model in self.constraint_models_dict.items():
             prob = constraint_confidence_over_hypers(model, best_probs_location, compute_grad=False)
             logging.info('  Probability of satisfying %18s constraint: %.5f' % (c, prob))
 

@@ -8,8 +8,8 @@ def main(expt_dir, repeat, repeat_start=0):
     repeat = int(repeat)
     repeat_start = int(repeat_start)
 
-    for i in xrange(repeat_start, repeat):
-        print 'Running experiment %d/%d.' % (i+1, repeat)
+    for i in range(repeat_start, repeat):
+        print('Running experiment %d/%d.' % (i+1, repeat))
 
         # Create output directory if needed and open output file
         output_dir = repeat_output_dir(expt_dir, i)

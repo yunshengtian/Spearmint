@@ -204,9 +204,9 @@ class SliceSampler(AbstractSampler):
             lp += param.prior_logprob()
 
             if np.isnan(lp): # Positive infinity should be ok, right?
-                print 'Param diagnostics:'
+                print('Param diagnostics:')
                 param.print_diagnostics()
-                print 'Prior logprob: %f' % param.prior_logprob()
+                print('Prior logprob: %f' % param.prior_logprob())
                 raise Exception("Prior returned %f logprob" % lp)
 
         if not np.isfinite(lp):
@@ -222,7 +222,7 @@ class SliceSampler(AbstractSampler):
         
     def sample(self, model):
         params_array = hyperparameter_utils.params_to_array(self.params)
-        for i in xrange(self.sampler_options.get('thinning', 0) + 1):
+        for i in range(self.sampler_options.get('thinning', 0) + 1):
             
             # make slice sampling safe against non-positive definite errors
             choleskyAttemptsRemaining=3
@@ -233,7 +233,7 @@ class SliceSampler(AbstractSampler):
                 except LinAlgError as ex:
                     if choleskyAttemptsRemaining == 0:
                         raise Exception("LinAlgError too many times... giving up and crashing")
-                    print 'LinAlgError-- trying again, remaining attempts: %d' % choleskyAttemptsRemaining
+                    print('LinAlgError-- trying again, remaining attempts: %d' % choleskyAttemptsRemaining)
                     # print params_array
                     # print self.params[0].name
                     # print model.params['ls'].value
@@ -264,15 +264,15 @@ if __name__ == '__main__':
 
     gsn = priors.Gaussian(mu = -1, sigma = 4)
 
-    for i in xrange(n):
+    for i in range(n):
         if i % 1000 == 0:
-            print 'Sample %d/%d' % (i,n)
+            print('Sample %d/%d' % (i,n))
 
         x, cur_ll = slice_sample(x, gsn. logprob)
         x_samples[i] = x.copy()
 
-    print '1D Gaussian actual mean: %f, mean of samples: %f' % (-1, np.mean(x_samples))
-    print '1D Gaussian actual sigma: %f, std of samples: %f' % (4, np.std(x_samples))
+    print('1D Gaussian actual mean: %f, mean of samples: %f' % (-1, np.mean(x_samples)))
+    print('1D Gaussian actual sigma: %f, std of samples: %f' % (4, np.std(x_samples)))
 
 
     plt.figure(1)
@@ -289,21 +289,21 @@ if __name__ == '__main__':
     x_samples = np.zeros((2,n))
     x = np.zeros(2)
 
-    for i in xrange(n):
+    for i in range(n):
         if i % 1000 == 0:
-            print 'Sample %d/%d' % (i,n)
+            print('Sample %d/%d' % (i,n))
 
         x, cur_ll = slice_sample(x, mvn.logprob)
         x_samples[:,i] = x.copy()
 
     mu_samp = np.mean(x_samples,axis=1)
-    print '2D Gaussian:'
-    print 'Actual mean:     [%f,%f]' % (mu[0], mu[1])
-    print 'Mean of samples: [%f,%f]' % (mu_samp[0], mu_samp[1])
-    print 'Actual Cov:'
-    print str(cov)
-    print 'Cov of samples'
-    print str(np.cov(x_samples))
+    print('2D Gaussian:')
+    print('Actual mean:     [%f,%f]' % (mu[0], mu[1]))
+    print('Mean of samples: [%f,%f]' % (mu_samp[0], mu_samp[1]))
+    print('Actual Cov:')
+    print(str(cov))
+    print('Cov of samples')
+    print(str(np.cov(x_samples)))
 
     # plt.figure(1)
     # plt.clf()

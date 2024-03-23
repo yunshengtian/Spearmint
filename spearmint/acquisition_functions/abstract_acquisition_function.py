@@ -186,9 +186,7 @@
 from abc import ABCMeta, abstractmethod
 import numpy as np
 
-class AbstractAcquisitionFunction(object):
-    __metaclass__ = ABCMeta
-
+class AbstractAcquisitionFunction(object, metaclass=ABCMeta):
     def __init__(self, *args, **kwargs):
         """ Are gradients implemented for this acquisition function? """
         self.has_gradients = True

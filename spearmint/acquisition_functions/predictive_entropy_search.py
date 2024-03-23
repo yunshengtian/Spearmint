@@ -393,7 +393,7 @@ def ep(obj_model, con_models, x_star, minimize=True):
 
     n = obj_model.observed_values.size
     obj = 'objective'
-    con = con_models.keys()
+    con = list(con_models.keys())
     all_tasks = con_models.copy()
     all_tasks[obj] = obj_model
 
@@ -558,7 +558,7 @@ def updateEPsolution(obj_model, con_models, epSolution, x_star):
 
     n = obj_model.observed_values.size
     obj = 'objective'
-    con = con_models.keys()
+    con = list(con_models.keys())
     all_tasks = con_models.copy()
     all_tasks[obj] = obj_model
 
@@ -685,7 +685,7 @@ def updateMarginals(a): # stuff below A.9
 
 
     # Before returning, we verify that the variances of the cavities are positive
-    for i in xrange(n):
+    for i in range(n):
         # We obtain the cavities
         Vfinv = matrixInverse(a['V'][obj][np.ix_([i,n],[i,n])])
         if np.any(npla.eigvalsh(Vfinv - a['Ahfhat'][i,:,:]) < 1e-6):
@@ -713,7 +713,7 @@ def updateFactors(a, damping, minimize=True):
     k = len(constraints)
     n = a['n']
 
-    for i in xrange(n):
+    for i in range(n):
 
         # We obtain the cavities
 
@@ -834,7 +834,7 @@ def predictEP(obj_model, con_models, a, x_star, Xtest, minimize=True):
     sgn = -1.0 if minimize else 1.0
 
     obj = a['obj']
-    constraints = con_models.keys()
+    constraints = list(con_models.keys())
     all_tasks = [obj] + constraints
 
     X = np.append(obj_model.observed_inputs, x_star, axis=0) 
@@ -890,7 +890,7 @@ def predictEP(obj_model, con_models, a, x_star, Xtest, minimize=True):
         try:
             ratio = np.exp(sps.norm.logpdf(alphac) - logZ - logcdf_robust(alphac)) * (np.exp(logZ) - 1.0)
         except RuntimeWarning:
-            print ("Capped ratio!  "*50)
+            print(("Capped ratio!  "*50))
             ratio = np.exp(50) # cap ratio to avoid overflow issues
 
     # dlogZdmcOld = ratio / np.sqrt(vc)
@@ -1243,8 +1243,8 @@ class PES(AbstractAcquisitionFunction):
         num_random_features=1000,
         x_star_grid_size=1000, x_star_tolerance=1e-6, num_x_star_samples=1):
 
-        obj_model = obj_model_dict.values()[0]
-        con_models = con_models_dict.values()
+        obj_model = list(obj_model_dict.values())[0]
+        con_models = list(con_models_dict.values())
         models = [obj_model] + list(con_models_dict.values())
 
         for model in models:
@@ -1319,7 +1319,7 @@ class PES(AbstractAcquisitionFunction):
             # where all samples fail, then we return 0.0 instead of np.zeros(N_cand), which
             # messes up function-over-hypers, because this expects an ndarray
             # in particular when f-over-h is subsampling, this happens more... 
-            for i in xrange(num_x_star_samples):
+            for i in range(num_x_star_samples):
 
                 # if you failed to sample a solution, just return 0
                 if x_stars[i] is None:
@@ -1328,7 +1328,7 @@ class PES(AbstractAcquisitionFunction):
                 # use the EP solutions to compute the acquisition function 
                 # (in the R code, this is the function evaluateAcquisitionFunction, which calls predictEP)
                 for t, val in evaluate_acquisition_function_given_EP_solution(obj_model_dict, 
-                                                con_models_dict, cand, ep_sols[i], x_stars[i]).iteritems():
+                                                con_models_dict, cand, ep_sols[i], x_stars[i]).items():
                     acq_dict[t] += val # taking an average here
             # change from sum to average (not that important:
             for t in acq_dict:
@@ -1338,7 +1338,7 @@ class PES(AbstractAcquisitionFunction):
 
             # by default, sum the PESC contribution for all tasks
             if tasks is None:
-                tasks = acq_dict.keys()
+                tasks = list(acq_dict.keys())
 
             # Compute the total acquisition function for the tasks of interests
             return sum([acq_dict[task] for task in tasks])
@@ -1352,7 +1352,7 @@ class PES(AbstractAcquisitionFunction):
         ep_sols = self.cached_EP_solutions[obj_model.state]
 
         # we now allow multiple of these per GP sample state... a bit confusing... very confusing
-        for i in xrange(num_x_star_samples):
+        for i in range(num_x_star_samples):
 
             if fast:
                 if x_stars[i] is not None:
@@ -1364,7 +1364,7 @@ class PES(AbstractAcquisitionFunction):
                     x_stars.append(self.DEBUG_xstar)
                 # sample x*
                 else:
-                    x_star = sample_solution(self.xstar_grid, self.num_dims, obj_model, con_models_dict.values(), 
+                    x_star = sample_solution(self.xstar_grid, self.num_dims, obj_model, list(con_models_dict.values()), 
                         num_random_features=num_random_features, x_star_tolerance=x_star_tolerance)
                     x_stars.append(x_star)
 
@@ -1396,8 +1396,8 @@ def evaluate_acquisition_function_given_EP_solution(obj_model_dict, con_models, 
         cand = cand[None]
 
     N_cand = cand.shape[0]
-    obj_name  = obj_model_dict.keys()[0]
-    obj_model = obj_model_dict.values()[0]
+    obj_name  = list(obj_model_dict.keys())[0]
+    obj_model = list(obj_model_dict.values())[0]
 
     # unconstrainedVariances = np.zeros((N_cand, len(con_models)+1))
     # unconstrainedVariances[:,0] = obj_model.predict(cand)[1] + obj_model.noise_value()
@@ -1405,7 +1405,7 @@ def evaluate_acquisition_function_given_EP_solution(obj_model_dict, con_models, 
     #     unconstrainedVariances[:,j+1] = con_models[c].predict(cand)[1] + con_models[c].noise_value()
     unconstrainedVariances = dict()
     unconstrainedVariances[obj_name] = obj_model.predict(cand)[1] + obj_model.noise_value()
-    for c, con_model in con_models.iteritems():
+    for c, con_model in con_models.items():
         unconstrainedVariances[c] = con_model.predict(cand)[1] + con_model.noise_value()
 
     # We then evaluate the constrained variances
@@ -1459,9 +1459,9 @@ def test_random_features_sampling():
     gp = GP(D, kernel='SquaredExp', likelihood='noiseless', stability_jitter=1e-10)
     gp.fit(inputs, vals, fit_hypers=False)
 
-    print 'ls=%s' % str(gp.params['ls'].value)
-    print 'noise=%f' % float(gp.noise_value())
-    print 'amp2=%f' % float(gp.params['amp2'].value)
+    print('ls=%s' % str(gp.params['ls'].value))
+    print('noise=%f' % float(gp.noise_value()))
+    print('amp2=%f' % float(gp.params['amp2'].value))
 
     """
     Test the function sample_gp_with_random_features by taking the dot product
@@ -1477,20 +1477,20 @@ def test_random_features_sampling():
     # print test_input_2
     K = gp.scaled_input_kernel.cross_cov(test_input_1, test_input_2)
 
-    print 'Error between the real coveraiance matrix and the approximated covariance matrix'
+    print('Error between the real coveraiance matrix and the approximated covariance matrix')
     nmax = 5
     for log_nFeatures in np.arange(0,nmax+1):
         tst_fun = sample_gp_with_random_features(gp, nFeatures=10**log_nFeatures, testing=True)
         this_should_be_like_K = np.dot(tst_fun(test_input_1).T, tst_fun(test_input_2))
         # print '%f, %f' % (K, this_should_be_like_K)
-        print 'nFeatures = 10^%d, average absolute error = %f' % (log_nFeatures, np.mean(np.abs(K-this_should_be_like_K)))
+        print('nFeatures = 10^%d, average absolute error = %f' % (log_nFeatures, np.mean(np.abs(K-this_should_be_like_K))))
 
     # The above test is good for the random features. But we should also test theta somehow. 
-    print 'difference between predicted mean at the inputs and the true values (should be 0 if noiseless): %f' % np.mean(np.abs(gp.predict(inputs)[0]-vals))
-    print 'Error between the predicted mean using the GP approximation, and the true values'
+    print('difference between predicted mean at the inputs and the true values (should be 0 if noiseless): %f' % np.mean(np.abs(gp.predict(inputs)[0]-vals)))
+    print('Error between the predicted mean using the GP approximation, and the true values')
     for log_nFeatures in np.arange(0,nmax+1):
         wrapper = sample_gp_with_random_features(gp, nFeatures=10**log_nFeatures)
-        print 'nFeatures = 10^%d, error on true values = %f' % (log_nFeatures, np.mean(np.abs(vals-wrapper(inputs, gradient=False))))
+        print('nFeatures = 10^%d, error on true values = %f' % (log_nFeatures, np.mean(np.abs(vals-wrapper(inputs, gradient=False)))))
         # print 'True values: %s' % str(vals)
         # print 'Approximated values: %s' % str(wrapper(inputs, gradient=False))
 
@@ -1504,20 +1504,20 @@ def test_random_features_sampling():
     # test[1,:] = test[0,:]+npr.randn(1,D)*0.2
 
     m, cv = gp.predict(test, full_cov=True)
-    print 'true mean = %s' % m
-    print 'true cov = \n%s' % cv
+    print('true mean = %s' % m)
+    print('true cov = \n%s' % cv)
 
     n_samples = int(1e4)
     samples = gp.sample_from_posterior_given_hypers_and_data(test, n_samples=n_samples, joint=True)
     true_mean = np.mean(samples, axis=1)
     true_cov = np.cov(samples)
-    print ''
-    print 'mean of %d gp samples = %s' % (n_samples, true_mean)
-    print 'cov of %d gp samples = \n%s' % (n_samples, true_cov)
+    print('')
+    print('mean of %d gp samples = %s' % (n_samples, true_mean))
+    print('cov of %d gp samples = \n%s' % (n_samples, true_cov))
 
     import sys
     approx_samples = 0.0*samples
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         if i % (n_samples/100) == 0:
             sys.stdout.write('%02d%% ' % (i/((n_samples/100))))
             sys.stdout.flush()
@@ -1525,15 +1525,15 @@ def test_random_features_sampling():
         samples[:,i] = np.array(wrapper(test, gradient=False)).T
     approx_mean = np.mean(samples, axis=1)
     approx_cov = np.cov(samples)
-    print ''
-    print 'mean of %d approx samples = %s' % (n_samples, approx_mean)
-    print 'cov of %d approx samples = \n%s' % (n_samples, approx_cov)
+    print('')
+    print('mean of %d approx samples = %s' % (n_samples, approx_mean))
+    print('cov of %d approx samples = \n%s' % (n_samples, approx_cov))
 
-    print ''
-    print 'error of true means = %s' % np.sum(np.abs(true_mean-m))
-    print 'error of true covs = %s' % np.sum(np.abs(true_cov-cv))
-    print 'error of approx means = %s' % np.sum(np.abs(approx_mean-m))
-    print 'error of approx covs = %s' % np.sum(np.abs(approx_cov-cv))
+    print('')
+    print('error of true means = %s' % np.sum(np.abs(true_mean-m)))
+    print('error of true covs = %s' % np.sum(np.abs(true_cov-cv)))
+    print('error of approx means = %s' % np.sum(np.abs(approx_mean-m)))
+    print('error of approx covs = %s' % np.sum(np.abs(approx_cov-cv)))
 
 
 def test_x_star_sampling():
@@ -1548,9 +1548,9 @@ def test_x_star_sampling():
     objective = GP(D)#, kernel='SquaredExp')#, likelihood='noiseless')
     objective.fit(inputs, vals, fit_hypers=False)
 
-    print 'ls=%s' % str(objective.params['ls'].value)
-    print 'noise=%f' % float(objective.params['noise'].value)
-    print 'amp2=%f' % float(objective.params['amp2'].value)
+    print('ls=%s' % str(objective.params['ls'].value))
+    print('noise=%f' % float(objective.params['noise'].value))
+    print('amp2=%f' % float(objective.params['amp2'].value))
 
     wrapper = sample_gp_with_random_features(objective, nFeatures=100) # test
     
@@ -1562,9 +1562,9 @@ def test_x_star_sampling():
     grid = sobol_grid.generate(D, grid_size=1000) 
     
     minimum = sample_solution(grid, D, objective, [constraint])
-    print 'Constrained Minimum of a different samples = %s' % str(minimum)
+    print('Constrained Minimum of a different samples = %s' % str(minimum))
 
-    print 'plotting'
+    print('plotting')
     if D == 1:
         import matplotlib.pyplot as plt
         spacing = np.linspace(0,1,1000)[:,None]
@@ -1573,7 +1573,7 @@ def test_x_star_sampling():
         approx_grad = wrapper(spacing, gradient=True)
 
         unconstrained_minimum = global_optimization_of_GP_approximation({'objective':wrapper, 'constraints':[]}, D, grid)
-        print 'Unconstrained minimum = %s' % str(unconstrained_minimum)
+        print('Unconstrained minimum = %s' % str(unconstrained_minimum))
 
         plt.figure()
         plt.plot(inputs, vals, color='r', marker='o', markersize=10, linestyle='None')
@@ -1628,12 +1628,12 @@ def test_acquisition_function():
         # the noise is 1e-6, the stability jitter is 1e-10
         STABILITY_JITTER = 1e-10
 
-        cfg = parsing.parse_config({'mcmc_iters':0, 
+        cfg = list(parsing.parse_config({'mcmc_iters':0, 
             'acquisition':'PES',
             'likelihood':'gaussian', 
             'kernel':"SquaredExp", 
             'stability_jitter':STABILITY_JITTER,
-            'initial_noise':1e-6})['tasks'].values()[0]
+            'initial_noise':1e-6})['tasks'].values())[0]
         objective = GP(D, **cfg)
 
         objective.fit(inputs, vals, fit_hypers=False)
@@ -1655,7 +1655,7 @@ def test_acquisition_function():
         acq_f = acq_class.create_acquisition_function({'obj':objective}, cons, DEBUG_xstar=x_star)
 
         acq_val = acq_f(test_input)
-        print 'Acquisition value: %s' % (acq_val)
+        print('Acquisition value: %s' % (acq_val))
 
 
 
@@ -1703,8 +1703,8 @@ def make_cool_figures():
     test_inputs = np.linspace(0,1,N_grid)[:,None]
     
     # next, fit a GP
-    cfg = parsing.parse_config({'mcmc_iters':0, 'initial_noise':1e-6, 'initial_amp2':1,
-        'acquisition':'PES'})['tasks'].values()[0]
+    cfg = list(parsing.parse_config({'mcmc_iters':0, 'initial_noise':1e-6, 'initial_amp2':1,
+        'acquisition':'PES'})['tasks'].values())[0]
     
     obj_gp = GP(D, **cfg)
     con_gp = GP(D, **cfg)
@@ -1839,7 +1839,7 @@ def make_cool_figures():
 
     plt.figure()
     plt.clf()
-    plt.hist(acq_class.cached_x_star.values(), bins=np.linspace(xmin,xmax,10), normed=True)
+    plt.hist(list(acq_class.cached_x_star.values()), bins=np.linspace(xmin,xmax,10), normed=True)
     plt.xticks([])
     plt.yticks([])
     plt.savefig('test_xstar_hist.png')

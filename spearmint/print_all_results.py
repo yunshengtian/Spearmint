@@ -216,13 +216,13 @@ def main(expt_dir, repeat=-1):
             
                 
         if job['status'] == 'complete':
-            print 'Job %d' % job['id']
+            print('Job %d' % job['id'])
 
             input_space.print_params(job['params'], left_indent=0)
-            for task,val in job['values'].iteritems():
-                print '%s: %s' % (task,val)
+            for task,val in job['values'].items():
+                print('%s: %s' % (task,val))
 
-            print ''
+            print('')
 
     # for task_name, task in tasks.iteritems():
     #     # print 'Printing results for task %s' % task_name

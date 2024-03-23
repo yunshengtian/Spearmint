@@ -187,6 +187,7 @@ import spearmint
 import logging
 from operator import add
 import sys
+from functools import reduce
 
 def print_resources_status(resources, jobs):
     if len(resources) == 1:
@@ -232,14 +233,14 @@ class Resource(object):
     # Take a list of jobs and filter only those that are running/run on this resource
     def filterMyJobs(self, jobs):
         if jobs:
-            return filter(lambda job: job['resource']==self.name, jobs)
+            return [job for job in jobs if job['resource']==self.name]
         else:
             return jobs
 
     def numPending(self, jobs):
         jobs = self.filterMyJobs(jobs)
         if jobs:
-            pending_jobs = map(lambda x: x['status'] in ['pending', 'new'], jobs)
+            pending_jobs = [x['status'] in ['pending', 'new'] for x in jobs]
             return reduce(add, pending_jobs, 0)
         else:
             return 0
@@ -247,7 +248,7 @@ class Resource(object):
     def numComplete(self, jobs):
         jobs = self.filterMyJobs(jobs)
         if jobs:
-            completed_jobs = map(lambda x: x['status'] == 'complete', jobs)
+            completed_jobs = [x['status'] == 'complete' for x in jobs]
             return reduce(add, completed_jobs, 0)
         else:
             return 0

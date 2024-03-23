@@ -264,7 +264,7 @@ def launch(db_address, experiment_name, job_id):
             if "objective" in result and "constraints" in result:
                 result_new = dict()
                 result_new[DEFAULTS['task_name']] = result["objective"]
-                for i in xrange(len(result["constraints"])):
+                for i in range(len(result["constraints"])):
                     result_new['%s%d' % (DEFAULTS['constraint_name'], i)] = result["constraints"][i]
                 result = result_new
 
@@ -272,7 +272,7 @@ def launch(db_address, experiment_name, job_id):
         # check that all((t in result for t in job['tasks']))
         if set(result.keys()) != set(job['tasks']):
             if set(result.keys()).union(['NaN']) != set(job['tasks']):
-                raise Exception("Result task names %s did not match job task names %s." % (result.keys(), job['tasks']))
+                raise Exception("Result task names %s did not match job task names %s." % (list(result.keys()), job['tasks']))
 
         success = True
     except:
@@ -281,7 +281,7 @@ def launch(db_address, experiment_name, job_id):
         import traceback
         traceback.print_exc()
         sys.stderr.write("Problem executing the function\n")
-        print sys.exc_info()
+        print(sys.exc_info())
         
     end_time = time.time()
 
@@ -348,7 +348,7 @@ def matlab_launcher(job):
     session.run("cd('%s')" % os.path.realpath(job['expt_dir']))
 
     session.run('params = struct()')
-    for name, param in job['params'].iteritems():
+    for name, param in job['params'].items():
         vals = param['values']
 
         # sys.stderr.write('%s = %s\n' % (param['name'], str(vals)))

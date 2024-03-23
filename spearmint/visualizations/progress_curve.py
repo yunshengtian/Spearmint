@@ -191,6 +191,7 @@ import numpy             as np
 import numpy.random      as npr
 import numpy.linalg      as npla
 import matplotlib        as mpl
+from functools import reduce
 mpl.use('Agg')
 mpl.rcParams['ps.useafm'] = True
 mpl.rcParams['pdf.use14corefonts'] = True
@@ -236,7 +237,7 @@ def true_func(stored, module, violation_value=np.inf, constraint_tol=0.0, object
 
     for c in constraints:
         if output[c] < -constraint_tol:
-            print 'Violation value of %f for constraint %s' % (output[c], c)
+            print('Violation value of %f for constraint %s' % (output[c], c))
             # print str(paramify_no_types(params))
             return violation_value
 
@@ -326,12 +327,12 @@ def main(dirs,
 
         obj, con        = get_objectives_and_constraints(options) # get the names
         obj = obj[0] # only one objective
-        print 'Found %d constraints' % len(con)
+        print('Found %d constraints' % len(con))
 
         plot_utility_gap = rec_type=="model" and hasattr(module, 'true_val')
 
         if plot_utility_gap:
-            print 'PLOTTING UTILITY GAP'
+            print('PLOTTING UTILITY GAP')
             if y_axis_label:
                 ax['err'].set_ylabel(y_axis_label, size=25)
             elif log_scale:
@@ -379,7 +380,7 @@ def main(dirs,
 
             n_iter = len(recs) if n_iter_spec is None else n_iter_spec
 
-            iters = range(n_iter)
+            iters = list(range(n_iter))
 
             if plot_wall_time:
                 if task_comp_x:
@@ -388,13 +389,13 @@ def main(dirs,
                 iters = iters[:n_iter]
                 iters = np.array(iters, dtype=float)
 
-            print 'Found %d iterations' % len(recs)
+            print('Found %d iterations' % len(recs))
 
             if rec_type == "model":
                 values = [true_func(rec, module, violation_value, constraint_tol, obj, con) for rec in recs]
 
                 if log_scale:
-                    ax['err'].plot(iters, map(np.log10,values))
+                    ax['err'].plot(iters, list(map(np.log10,values)))
                 else:
                     ax['err'].plot(iters, values)
             else:
@@ -405,7 +406,7 @@ def main(dirs,
                 else:
                     raise Exception("unknown rec type")
 
-                for i in xrange(len(observations)):
+                for i in range(len(observations)):
                     if observations[i] is None or np.isnan(observations[i]):
                         observations[i] = violation_value
                 # print observations
@@ -424,12 +425,12 @@ def main(dirs,
                     ax['dist'].plot(iters, distances)
         else:
              # MULTIPLE REPEATS
-            repeat_recs = [db.load(repeat_experiment_name(experiment_name,j),db_document_name) for j in xrange(n_repeat)]
+            repeat_recs = [db.load(repeat_experiment_name(experiment_name,j),db_document_name) for j in range(n_repeat)]
             if None in repeat_recs:
                 for i, repeat_rec in enumerate(repeat_recs):
                     if repeat_rec is None:
-                        print 'Could not load experiment %s repeat %d' % (experiment_name, i)
-                print 'Exiting...'
+                        print('Could not load experiment %s repeat %d' % (experiment_name, i))
+                print('Exiting...')
                 return
 
             if task_comp_x:
@@ -447,13 +448,13 @@ def main(dirs,
                         elif cur_complete == last_complete:
                             pass
                         else: 
-                            print('WARNING: cur complete=%d, last_complete=%d' % (cur_complete,  last_complete))
+                            print(('WARNING: cur complete=%d, last_complete=%d' % (cur_complete,  last_complete)))
                             break
                     new_repeat_recs.append(new_recs)
 
                 repeat_recs = new_repeat_recs
             
-            n_iter_each = map(len, repeat_recs)
+            n_iter_each = list(map(len, repeat_recs))
             if plot_wall_time:
                 """ do everything separately from here if plotting wall time
                 here is what we do... we can't have a square array because 
@@ -466,18 +467,18 @@ def main(dirs,
                 if rec_type != "model":
                     values      = list()
                     wall_times  = list()
-                    for j in xrange(n_repeat):  # loop over repeated experiments
+                    for j in range(n_repeat):  # loop over repeated experiments
 
-                        wall_times.append( np.array([ repeat_recs[j][i]['total_elapsed_time']/60.0 for i in xrange(n_iter_each[j]) ]))
+                        wall_times.append( np.array([ repeat_recs[j][i]['total_elapsed_time']/60.0 for i in range(n_iter_each[j]) ]))
 
                         if rec_type == "observations":
-                            values.append([ repeat_recs[j][i]['obj_o'] for i in xrange(n_iter_each[j])])
+                            values.append([ repeat_recs[j][i]['obj_o'] for i in range(n_iter_each[j])])
                         elif rec_type == "mixed":
-                            values.append([ repeat_recs[j][i]['obj_om'] for i in xrange(n_iter_each[j])])
+                            values.append([ repeat_recs[j][i]['obj_om'] for i in range(n_iter_each[j])])
                         else:
                             raise Exception("unknown rec type")
                             
-                        for i in xrange(n_iter_each[j]):
+                        for i in range(n_iter_each[j]):
                             if values[-1][i] is None or np.isnan(values[-1][i]):
                                 values[-1][i] = violation_value
 
@@ -488,32 +489,32 @@ def main(dirs,
                 else: # if plot wall tiem but using model
                     values     = list()
                     wall_times = list()
-                    for j in xrange(n_repeat):  # loop over repeated experiments
+                    for j in range(n_repeat):  # loop over repeated experiments
 
                         # for this repeat, get all wall times 
-                        wall_times.append( np.array([ repeat_recs[j][i]['total_elapsed_time']/60.0 for i in xrange(n_iter_each[j]) ]))
+                        wall_times.append( np.array([ repeat_recs[j][i]['total_elapsed_time']/60.0 for i in range(n_iter_each[j]) ]))
                         
                         values_j = np.zeros(n_iter_each[j])
-                        for i in xrange(n_iter_each[j]):      # loop over iterations
+                        for i in range(n_iter_each[j]):      # loop over iterations
                             val = true_func(repeat_recs[j][i], module, None, constraint_tol, obj, con)
                             if val is None or np.isnan(val): #set to violation value here so we can print out this info...
                                 values_j[i] = violation_value
-                                print 'Violation with params %s at repeat %d iter %d' % (paramify_no_types(repeat_recs[j][i]['params']), j, i)
+                                print('Violation with params %s at repeat %d iter %d' % (paramify_no_types(repeat_recs[j][i]['params']), j, i))
                             else:
                                 values_j[i] = val
                         values.append(values_j)
 
                 # change the data structure to be time bins and include everything in
                 # those time bins across repeats
-                end_times = map(max,wall_times)
-                for j in xrange(n_repeat):
-                    print 'end time for repeat %d: %f' % (j, end_times[j])
+                end_times = list(map(max,wall_times))
+                for j in range(n_repeat):
+                    print('end time for repeat %d: %f' % (j, end_times[j]))
                 iters = np.arange(0.0,np.round(max(end_times)), bin_size)
                 new_values = list()
                 for i,timestep in enumerate(iters):
                     # print 'Creating wall time bin from %f to %f. (%d/%d)' % (i, i+bin_size, i, len(iters))
                     new_value = list()
-                    for j in xrange(n_repeat):
+                    for j in range(n_repeat):
                         new_value = np.append(new_value, values[j][np.logical_and(wall_times[j] >= timestep, wall_times[j] < timestep+bin_size)].flatten())
                     # if a time bin is empty across all repeats:
                     if len(new_value) == 0:
@@ -529,7 +530,7 @@ def main(dirs,
                 values.insert(0, np.array([violation_value]))
 
                 # Average over the repeated experiments
-                average_values = map(avg, values)
+                average_values = list(map(avg, values))
                 errorbars = bootstrap_errorbars(values, log=log_scale, avg=avg)
                 # plt.yscale('log', nonposy='clip')
 
@@ -543,19 +544,19 @@ def main(dirs,
 
                 n_iter      = reduce(min, n_iter_each, np.inf)
                 if n_iter_spec is None:
-                    print 'Found %d repeats with at least %d iterations' % (n_repeat, n_iter)
-                    print {i:n_iter_each[i] for i in xrange(n_repeat)}
+                    print('Found %d repeats with at least %d iterations' % (n_repeat, n_iter))
+                    print({i:n_iter_each[i] for i in range(n_repeat)})
                 elif n_iter < n_iter_spec:
-                    print 'You specified %d iterations but there are only %d available... so plotting %d' % (n_iter_spec, n_iter, n_iter)
+                    print('You specified %d iterations but there are only %d available... so plotting %d' % (n_iter_spec, n_iter, n_iter))
                 else:
                     n_iter = n_iter_spec
-                    print 'Plotting %d iterations' % n_iter
+                    print('Plotting %d iterations' % n_iter)
 
-                iters = range(n_iter)
+                iters = list(range(n_iter))
 
                 if rec_type != "model":
                     values      = np.zeros((n_iter, n_repeat))
-                    for j in xrange(n_repeat):  # loop over repeated experiments
+                    for j in range(n_repeat):  # loop over repeated experiments
                         for i in iters[j]:      # loop over iterations
                             if rec_type == "observations":
                                 values[i,j] = repeat_recs[j][i]['obj_o']
@@ -566,17 +567,17 @@ def main(dirs,
                             if values[i,j] is None or np.isnan(values[i,j]):
                                 values[i,j] = violation_value
 
-                    print values
+                    print(values)
 
                 else:
                     values      = np.zeros((n_iter, n_repeat))
                     distances   = np.zeros((n_iter, n_repeat))
-                    for j in xrange(n_repeat):  # loop over repeated experiments
+                    for j in range(n_repeat):  # loop over repeated experiments
                         for i in iters:      # loop over iterations 
                             val = true_func(repeat_recs[j][i], module, None, constraint_tol, obj, con)
                             if val is None: #set to violation value here so we can print out this info...
                                 values[i,j] = violation_value
-                                print 'Violation with params %s at repeat %d iter %d' % (paramify_no_types(repeat_recs[j][i]['params']), j, i)
+                                print('Violation with params %s at repeat %d iter %d' % (paramify_no_types(repeat_recs[j][i]['params']), j, i))
                             else:
                                 values[i,j] = val
 
@@ -592,14 +593,14 @@ def main(dirs,
 
                 else:
                     # Average over the repeated experiments
-                    average_values = map(avg, values)
+                    average_values = list(map(avg, values))
                     errorbars = bootstrap_errorbars(values, log=log_scale, avg=avg)
                     # plt.yscale('log', nonposy='clip')
 
                     if stretch_x:
                         fctr = float(n_iter_spec) / float(n_iter)
                         iters = np.array(iters) * fctr
-                        print 'Stretching x axis by a factor of %f' % fctr                
+                        print('Stretching x axis by a factor of %f' % fctr)                
 
                     if log_scale:
                         ax['err'].errorbar(iters, np.log10(average_values), yerr=errorbars)
@@ -607,14 +608,14 @@ def main(dirs,
                         ax['err'].errorbar(iters, average_values, yerr=errorbars)
 
                     if make_dist_plot:
-                        average_dist = map(avg, distances)
+                        average_dist = list(map(avg, distances))
                         errorbars_dist = bootstrap_errorbars(distances, log=log_scale, avg=avg)
                         if log_scale:
                             ax['dist'].errorbar(iters, np.log10(average_dist), yerr=errorbars_dist)
                         else:
                             ax['dist'].errorbar(iters, average_dist, yerr=errorbars_dist)
 
-        acq_names.append(options["tasks"].values()[0]["acquisition"])
+        acq_names.append(list(options["tasks"].values())[0]["acquisition"])
         if acq_names[-1] == 'PES':
             acq_names[-1] = 'PESC'
         if acq_names[-1] == 'ExpectedImprovement':
@@ -630,14 +631,14 @@ def main(dirs,
     # save it in the last directory... (if there are multiple directories)
     if not plot_wall_time:
         if n_repeat >= 0:
-            print 'Made a plot with %d repeats and %d iterations' % (n_repeat, n_iter)
+            print('Made a plot with %d repeats and %d iterations' % (n_repeat, n_iter))
         else:
-            print 'Made a plot with %d iterations' % (n_iter)
+            print('Made a plot with %d iterations' % (n_iter))
     else:
         if n_repeat >= 0:
-            print 'Made a plot with %d repeats and %f minutes' % (n_repeat, max(iters))
+            print('Made a plot with %d repeats and %f minutes' % (n_repeat, max(iters)))
         else:
-            print 'Made a plot with %f minutes' % (max(iters))
+            print('Made a plot with %f minutes' % (max(iters)))
     
     file_prefix = '%s_' % average if n_repeat > 0 else ''
     file_postfix = '_wall_time' if plot_wall_time else ''
@@ -645,12 +646,12 @@ def main(dirs,
     figname = os.path.join(plots_dir, '%serror%s' % (file_prefix, file_postfix))
     fig['err'].savefig(figname + '.pdf')
     fig['err'].savefig(figname + '.svg')
-    print 'Saved to %s' % figname
+    print('Saved to %s' % figname)
     if make_dist_plot:
         fig['dist'].tight_layout()
         figname_dist = os.path.join(plots_dir, '%sl2_distance%s.pdf' % (file_prefix, file_postfix))
         fig['dist'].savefig(figname_dist)
-        print 'Saved to %s' % figname_dist
+        print('Saved to %s' % figname_dist)
 
 # computes the l2 norm between x and y assuming x and y are stores as dicts of params
 # and also the first one (x) has this extra 'values' nonsense
@@ -683,14 +684,14 @@ def bootstrap_errorbars(X, M=1000, log=False, avg=np.mean):
     for i,x in enumerate(X):
         boots_i = np.zeros(M)
         if np.array(x).size>1: # if there's only one or 0 values, errorbar=0
-            for m in xrange(M):
+            for m in range(M):
                 resampled_x = x[npr.randint(0, x.size,size=x.size)]
                 boots_i[m] = avg(resampled_x)
             if log:
                 boots_i = np.log10(boots_i)
         boots.append(boots_i)
     boots = np.array(boots)
-    errorbars = map(np.std, boots)
+    errorbars = list(map(np.std, boots))
     return errorbars
 
 # Usage:

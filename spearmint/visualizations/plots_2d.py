@@ -222,21 +222,21 @@ nGridPoints = 100
 def get_ready_to_plot(input_space, current_best):
 
     if len(input_space.variables_meta) == 2:
-        xmin = input_space.variables_meta.values()[0]['min']
-        xmax = input_space.variables_meta.values()[0]['max']
-        ymin = input_space.variables_meta.values()[1]['min']
-        ymax = input_space.variables_meta.values()[1]['max']
+        xmin = list(input_space.variables_meta.values())[0]['min']
+        xmax = list(input_space.variables_meta.values())[0]['max']
+        ymin = list(input_space.variables_meta.values())[1]['min']
+        ymax = list(input_space.variables_meta.values())[1]['max']
         bounds = (xmin,xmax,ymin,ymax)
-        xlabel = input_space.variables_meta.keys()[0]
-        ylabel = input_space.variables_meta.keys()[1]
+        xlabel = list(input_space.variables_meta.keys())[0]
+        ylabel = list(input_space.variables_meta.keys())[1]
     elif len(input_space.variables_meta) == 1:
-        xmin = input_space.variables_meta.values()[0]['min']
-        xmax = input_space.variables_meta.values()[0]['max']
-        ymin = input_space.variables_meta.values()[0]['min']
-        ymax = input_space.variables_meta.values()[0]['max']
+        xmin = list(input_space.variables_meta.values())[0]['min']
+        xmax = list(input_space.variables_meta.values())[0]['max']
+        ymin = list(input_space.variables_meta.values())[0]['min']
+        ymax = list(input_space.variables_meta.values())[0]['max']
         bounds = (xmin,xmax,ymin,ymax)
-        xlabel = input_space.variables_meta.keys()[0] + "_1"
-        ylabel = input_space.variables_meta.keys()[0] + "_2"
+        xlabel = list(input_space.variables_meta.keys())[0] + "_1"
+        ylabel = list(input_space.variables_meta.keys())[0] + "_2"
     else:
         raise Exception("How can num_dims be 2 if the number of variables is not 1 or 2??")
 
@@ -379,7 +379,7 @@ def plot_2d_constraints(chooser, directory, input_space, current_best=None):
             plt.plot(mapped_observed_inputs[:,0], mapped_observed_inputs[:,1], '.k', markersize=4)
             c = model.counts
             p_avg = model.function_over_hypers(lambda: model.sigmoid(model.latent_values.value))
-            for j in xrange(c.size):
+            for j in range(c.size):
                 plt.annotate('%d/%d' % (c[j], model.options['binomial_trials']), (mapped_observed_inputs[j,0], mapped_observed_inputs[j,1]), fontsize=11)
                 plt.annotate('%.2f' % p_avg[j], (mapped_observed_inputs[j,0], mapped_observed_inputs[j,1]), 
                     fontsize=8, horizontalalignment='left', verticalalignment='top') # 'top' means below the data point, for some reason
@@ -483,7 +483,7 @@ def plot_acquisition_function(chooser, directory, input_space, current_best_loca
 
     # for task_name in tasks_to_plot:
 
-    suggestion = chooser.suggest(chooser.tasks.keys())[0] # must do this before computing acq
+    suggestion = chooser.suggest(list(chooser.tasks.keys()))[0] # must do this before computing acq
 
     # acq_name = chooser.acquisition_functions[task_name]["name"]
     # acq_fun  = chooser.acquisition_functions[task_name]["class"](chooser.num_dims, DEBUG_input_space=input_space)
@@ -497,7 +497,7 @@ def plot_acquisition_function(chooser, directory, input_space, current_best_loca
 
     fig = plt.figure(5)
     plt.clf()
-    acq = function_over_hypers(chooser.models.values(), acq_fun.acquisition, 
+    acq = function_over_hypers(list(chooser.models.values()), acq_fun.acquisition, 
                               chooser.objective_model_dict, chooser.constraint_models_dict, 
                               flat_grid, current_best_value, compute_grad=False)
     best_acq_index = np.argmax(acq)
@@ -548,9 +548,9 @@ def plot_hypers(model, directory, filename_prefix):
     # plot the hyperparameters with bar charts
     # --> plot the hyperparameters that are being sampled, namely the ones in self.hyper_names
     hypers_to_plot = defaultdict(list)
-    for hyper_name, hyper in model.params.iteritems():
+    for hyper_name, hyper in model.params.items():
 
-        for i in xrange(model.num_states):
+        for i in range(model.num_states):
             model.set_state(i)
             if hyper_name == 'noise':
                 hypers_to_plot['noise_sig'].append(np.sqrt(hyper.value))
@@ -560,7 +560,7 @@ def plot_hypers(model, directory, filename_prefix):
                 hypers_to_plot['ls-x'].append( hyper.value[0] )
                 hypers_to_plot['ls-y'].append( hyper.value [1] )
             else:
-                for j in xrange(hyper.size()):
+                for j in range(hyper.size()):
                     hypers_to_plot['%s%d' % (hyper_name, j)].append(hyper.value[j])
     
     width = 0.35
@@ -569,8 +569,8 @@ def plot_hypers(model, directory, filename_prefix):
     ind = np.arange(len(hypers_to_plot))
     means = [np.mean(hypers_to_plot[h]) for h in hypers_to_plot]
     rects = plt.bar(ind, means, width, color='y')
-    plt.boxplot(hypers_to_plot.values(), positions=ind+width/2, widths=width, whis=1e10) # a big value here means the whiskers are the max and min of the data
-    plt.xticks(range(len(hypers_to_plot)), hypers_to_plot.keys()) # ind+width/2., 
+    plt.boxplot(list(hypers_to_plot.values()), positions=ind+width/2, widths=width, whis=1e10) # a big value here means the whiskers are the max and min of the data
+    plt.xticks(list(range(len(hypers_to_plot))), list(hypers_to_plot.keys())) # ind+width/2., 
     
     plt.setp(plt.xticks()[1], rotation=90)
 
@@ -608,7 +608,7 @@ def main(expt_dir, repeat=None):
 
     hypers = chooser.fit(tasks, hypers)
 
-    print '\nHypers:'
+    print('\nHypers:')
     print_hypers(hypers)
 
     recommendation = chooser.best()
@@ -624,7 +624,7 @@ def main(expt_dir, repeat=None):
             if not os.path.isdir(plots_subdir):
                 os.mkdir(plots_subdir)
 
-    print 'Plotting...'
+    print('Plotting...')
 
     # Plot objective model
     # plot_2d_mean_and_var(chooser.objective_model, plots_dir, 
@@ -632,7 +632,7 @@ def main(expt_dir, repeat=None):
     #     input_space, current_best_location)
     
     # plot_hypers(chooser.objective_model, plots_dir, 'objective_function')
-    for task_name, model in chooser.models.iteritems():
+    for task_name, model in chooser.models.items():
 
         plots_subdir = os.path.join(plots_dir, task_name) if len(chooser.models) > 1 else plots_dir
 
@@ -646,7 +646,7 @@ def main(expt_dir, repeat=None):
 
     plot_acquisition_function(chooser, plots_dir, input_space, current_best_location, current_best_value)
 
-    print 'Done plotting.'
+    print('Done plotting.')
 
 # usage: python plots_2d.py DIRECTORY
 if __name__ == '__main__':
