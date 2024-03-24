@@ -1,0 +1,1 @@
+db_choice = 'tinydb' # 'mongodb' or 'tinydb'

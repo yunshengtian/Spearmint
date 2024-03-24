@@ -190,7 +190,8 @@ import shutil
 from spearmint.utils.parsing import parse_config_file
 from spearmint.utils.parsing import repeat_experiment_name
 from spearmint.utils.parsing import repeat_output_dir
-from spearmint.utils.database.mongodb import MongoDB
+# from spearmint.utils.database.mongodb import MongoDB
+from spearmint.utils.database.tinydb import TinyDBHandler
 
 
 def cleanup(path, repeat=-1):
@@ -202,7 +203,8 @@ def cleanup(path, repeat=-1):
 
     db_address = cfg['database']['address']  
     # client = pymongo.MongoClient(db_address)
-    db         = MongoDB(database_address=db_address)
+    # db         = MongoDB(database_address=db_address)
+    db = TinyDBHandler()
 
     experiment_name = cfg["experiment_name"]
 

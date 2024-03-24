@@ -201,7 +201,13 @@ import matplotlib.pyplot as plt
 from collections                      import defaultdict 
 from spearmint.utils.parsing          import parse_config_file
 from spearmint.utils.parsing          import parse_tasks_from_jobs
-from spearmint.utils.database.mongodb import MongoDB
+from spearmint.utils.database import db_choice
+if db_choice == 'mongodb':
+    from spearmint.utils.database.mongodb import MongoDB
+elif db_choice == 'tinydb':
+    from spearmint.utils.database.tinydb import TinyDBHandler
+else:
+    raise NotImplementedError
 from spearmint.tasks.input_space      import InputSpace
 from spearmint.main                   import load_jobs
 from spearmint.main                   import print_hypers
@@ -596,7 +602,12 @@ def main(expt_dir, repeat=None):
     chooser_module = importlib.import_module('spearmint.choosers.' + options['chooser'])
     chooser = chooser_module.init(input_space, options)
 
-    db = MongoDB(database_address=options['database']['address'])
+    if db_choice == 'mongodb':
+        db = MongoDB(database_address=options['database']['address'])
+    elif db_choice == 'tinydb':
+        db = TinyDBHandler()
+    else:
+        raise NotImplementedError
 
     jobs = load_jobs(db, experiment_name)
     hypers = db.load(experiment_name, 'hypers')

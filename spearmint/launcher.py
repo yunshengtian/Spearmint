@@ -189,7 +189,13 @@ import optparse
 import subprocess
 import numpy as np
 
-from spearmint.utils.database.mongodb import MongoDB
+from spearmint.utils.database import db_choice
+if db_choice == 'mongodb':
+    from spearmint.utils.database.mongodb import MongoDB
+elif db_choice == 'tinydb':
+    from spearmint.utils.database.tinydb import TinyDBHandler
+else:
+    raise NotImplementedError
 from spearmint.utils.parsing import DEFAULTS
 from spearmint.tasks.input_space import paramify_no_types
 
@@ -225,7 +231,12 @@ def launch(db_address, experiment_name, job_id):
     Launches a job from on a given id.
     """
 
-    db  = MongoDB(database_address=db_address)
+    if db_choice == 'mongodb':
+        db  = MongoDB(database_address=db_address)
+    elif db_choice == 'tinydb':
+        db  = TinyDBHandler()
+    else:
+        raise NotImplementedError
     job = db.load(experiment_name, 'jobs', {'id' : job_id})
 
     start_time        = time.time()

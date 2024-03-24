@@ -207,7 +207,13 @@ from spearmint.utils.parsing          import parse_tasks_from_jobs
 from spearmint.utils.parsing          import repeat_experiment_name
 from spearmint.utils.parsing          import get_objectives_and_constraints
 from spearmint.utils.parsing          import DEFAULTS
-from spearmint.utils.database.mongodb import MongoDB
+from spearmint.utils.database import db_choice
+if db_choice == 'mongodb':
+    from spearmint.utils.database.mongodb import MongoDB
+elif db_choice == 'tinydb':
+    from spearmint.utils.database.tinydb import TinyDBHandler
+else:
+    raise NotImplementedError
 from spearmint.tasks.input_space      import InputSpace
 from spearmint.tasks.input_space      import paramify_no_types
 from spearmint.main                   import load_jobs
@@ -310,7 +316,12 @@ def main(dirs,
         input_space     = InputSpace(options["variables"])
         chooser_module  = importlib.import_module('spearmint.choosers.' + options['chooser'])
         chooser         = chooser_module.init(input_space, options)
-        db              = MongoDB(database_address=options['database']['address'])
+        if db_choice == 'mongodb':
+            db              = MongoDB(database_address=options['database']['address'])
+        elif db_choice == 'tinydb':
+            db              = TinyDBHandler()
+        else:
+            raise NotImplementedError
         jobs            = load_jobs(db, experiment_name)
         hypers          = db.load(experiment_name, 'hypers')
         tasks           = parse_tasks_from_jobs(jobs, experiment_name, options, input_space)

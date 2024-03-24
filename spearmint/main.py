@@ -206,7 +206,13 @@ except ImportError: import json
 
 from collections import defaultdict
 
-from spearmint.utils.database.mongodb import MongoDB
+from spearmint.utils.database import db_choice
+if db_choice == 'mongodb':
+    from spearmint.utils.database.mongodb import MongoDB
+elif db_choice == 'tinydb':
+    from spearmint.utils.database.tinydb import TinyDBHandler
+else:
+    raise NotImplementedError
 from spearmint.tasks.input_space      import InputSpace
 from spearmint.utils.parsing          import parse_tasks_from_jobs
 from spearmint.utils.parsing          import parse_config_file
@@ -267,7 +273,12 @@ def main(expt_dir, config_file="config.json", no_output=False, repeat=-1):
 
     # Connect to the database
     db_address = options['database']['address']
-    db         = MongoDB(database_address=db_address)
+    if db_choice == 'mongodb':
+        db = MongoDB(database_address=db_address)
+    elif db_choice == 'tinydb':
+        db = TinyDBHandler()
+    else:
+        raise NotImplementedError
 
     overall_start_time = time.time()
     db.save({'start-time':overall_start_time}, experiment_name, 'start-time')
