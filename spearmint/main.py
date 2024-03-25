@@ -230,8 +230,7 @@ logging.basicConfig(level=logLevel,
                     # datefmt="%H:%M:%S")
 # logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
 
-
-def main(expt_dir, config_file="config.json", no_output=False, repeat=-1):
+def main(expt_dir, config_file="config.json", no_output=False, repeat=-1, load_init=False):
     if not os.path.isdir(expt_dir):
         raise Exception("Cannot find directory %s" % expt_dir)
 
@@ -276,13 +275,41 @@ def main(expt_dir, config_file="config.json", no_output=False, repeat=-1):
     if db_choice == 'mongodb':
         db = MongoDB(database_address=db_address)
     elif db_choice == 'tinydb':
-        db = TinyDBHandler()
+        os.makedirs('data', exist_ok=True)
+        db = TinyDBHandler(database_path=f'data/{experiment_name}.json')
     else:
         raise NotImplementedError
 
     overall_start_time = time.time()
     db.save({'start-time':overall_start_time}, experiment_name, 'start-time')
 
+    # Load data from external files and save it to the database
+    if load_init:
+        problem_name, seed = experiment_name.split('-')
+        init_data_path = os.path.join('init_data', problem_name, f'{seed}.pkl')
+        if not os.path.exists(init_data_path):
+            return None
+        init_data = np.load(init_data_path, allow_pickle=True)
+        X = init_data['X']
+        Y = -init_data['Y']
+        C = init_data['C']
+        for i in range(len(X)):
+            init_job = {
+                'id'          : i + 1,
+                'params'      : input_space.paramify(X[i]),
+                'values'      : {'f': Y[i], 'c': C[i]},
+                'expt_dir'    : options['main_file_path'],
+                'tasks'       : ['f', 'c'],
+                'resource'    : options['resource_name'],
+                'main-file'   : options['main_file'],
+                'language'    : options['language'],
+                'status'      : 'complete',
+                'submit time' : time.time(),
+                'start time'  : time.time(),
+                'end time'    : time.time(),
+                'fast update' : False # just for plotting - not important
+            }
+            save_job(init_job, db, experiment_name)
 
     waiting_for_results = False  # for printing purposes only
     while True:
@@ -384,7 +411,7 @@ def main(expt_dir, config_file="config.json", no_output=False, repeat=-1):
                 # Set the status of the job appropriately (successfully submitted or not)
                 if process_id is None:
                     suggested_job['status'] = 'broken'
-                    logging.info('Job %s failed -- check output file for details.' % job['id'])
+                    logging.info('Job %s failed -- check output file for details.' % suggested_job['id'])
                     save_job(suggested_job, db, experiment_name)
                 else:
                     suggested_job['status'] = 'pending'
@@ -595,9 +622,11 @@ if __name__ == '__main__':
     parser.add_option("--repeat", dest="repeat",
                       help="Used for repeating the same experiment many times.",
                       type="int", default="-1")
+    parser.add_option("--load-init", action='store_true',
+                      help="Load initial data from a file.")
 
     (kwargs, args) = parser.parse_args()
 
     expt_dir  = os.path.realpath(args[0])
 
-    main(expt_dir, kwargs.config_file, kwargs.no_output, kwargs.repeat)
+    main(expt_dir, kwargs.config_file, kwargs.no_output, kwargs.repeat, kwargs.load_init)

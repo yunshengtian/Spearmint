@@ -217,7 +217,7 @@ def main(expt_dir, repeat=-1):
     if db_choice == 'mongodb':
         db              = MongoDB(database_address=options['database']['address'])
     elif db_choice == 'tinydb':
-        db              = TinyDBHandler()
+        db              = TinyDBHandler(database_path=f'data/{experiment_name}.json')
     else:
         raise NotImplementedError
     jobs            = load_jobs(db, experiment_name)

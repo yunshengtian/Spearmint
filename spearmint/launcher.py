@@ -234,7 +234,7 @@ def launch(db_address, experiment_name, job_id):
     if db_choice == 'mongodb':
         db  = MongoDB(database_address=db_address)
     elif db_choice == 'tinydb':
-        db  = TinyDBHandler()
+        db  = TinyDBHandler(database_path=f'data/{experiment_name}.json')
     else:
         raise NotImplementedError
     job = db.load(experiment_name, 'jobs', {'id' : job_id})

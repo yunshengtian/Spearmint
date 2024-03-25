@@ -9,5 +9,6 @@
 *.pdf
 *.py~
 
-
-
+build/
+data/
+spearmint.egg-info/
