@@ -191,7 +191,7 @@ import scipy.linalg      as spla
 import scipy.optimize    as spo
 import scipy.io          as sio
 import scipy.stats       as sps
-import weave
+# import weave
 from collections import defaultdict
 
 from .gp                                     import GP

@@ -184,7 +184,7 @@
 
 
 import numpy as np
-import weave
+# import weave
 import scipy.linalg as spla
 
 # Update Cholesky decomposition to include a single extra
@@ -210,52 +210,52 @@ def fast_chol_add(L, A):
 
     isPosDef = 1;
     j = rows-1    
-    try:
-        code = \
-        """
-        double s = 0;
-        for (int i=0; i<cols; i++) {
-            s = A(i,j);
-            for (int ind=0; ind<i; ind++)
-                s -= U(ind,i) * U(ind,j);
+    # try:
+    #     code = \
+    #     """
+    #     double s = 0;
+    #     for (int i=0; i<cols; i++) {
+    #         s = A(i,j);
+    #         for (int ind=0; ind<i; ind++)
+    #             s -= U(ind,i) * U(ind,j);
 
-            if (i == j) {
-                if (s <= 0) {
-                    isPosDef = 0;
-                    U(i,i) = 0;
-                }
-                else {
-                    U(i,i) = sqrt(s);
-                }
-            } else {
-                if (U(i,i) > 0) {
-                    U(i,j) = s / U(i,i);
-                }
-                else {
-                    U(i,j) = 0;
-                }
-            }
-        }
-        """
-        weave.inline(code, ['U','A','j','isPosDef','rows','cols'], \
-                               type_converters=weave.converters.blitz, \
-                               compiler='gcc')
-    except:
-        k = np.arange(cols)
-        for i in range(cols):
-            j = rows-1;
-            s = A[i,j] - np.dot(U[k[:i],i].T,U[k[:i],j])
-            if i == j:
-                if s <= 0:
-                    isPosDef = 0
-                    U[i,i] = 0
-                else:
-                    U[i,i] = np.sqrt(s)
+    #         if (i == j) {
+    #             if (s <= 0) {
+    #                 isPosDef = 0;
+    #                 U(i,i) = 0;
+    #             }
+    #             else {
+    #                 U(i,i) = sqrt(s);
+    #             }
+    #         } else {
+    #             if (U(i,i) > 0) {
+    #                 U(i,j) = s / U(i,i);
+    #             }
+    #             else {
+    #                 U(i,j) = 0;
+    #             }
+    #         }
+    #     }
+    #     """
+    #     weave.inline(code, ['U','A','j','isPosDef','rows','cols'], \
+    #                            type_converters=weave.converters.blitz, \
+    #                            compiler='gcc')
+    # except:
+    k = np.arange(cols)
+    for i in range(cols):
+        j = rows-1
+        s = A[i,j] - np.dot(U[k[:i],i].T,U[k[:i],j])
+        if i == j:
+            if s <= 0:
+                isPosDef = 0
+                U[i,i] = 0
             else:
-                if U[i,i] > 0:
-                    U[i,j] = s / U[i,i]
-                else:
-                    U[i,j] = 0
+                U[i,i] = np.sqrt(s)
+        else:
+            if U[i,i] > 0:
+                U[i,j] = s / U[i,i]
+            else:
+                U[i,j] = 0
 
     L = U.T
     return L, isPosDef
