@@ -1,0 +1,59 @@
+{
+    "language": "PYTHON",
+    "main_file": "spe",
+    "experiment-name": "spe",
+    "acquisition": "PES",
+    "max_finished_jobs": 200,
+    "variables": {
+        "x1": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 2.6,
+            "max": 3.6
+        },
+        "x2": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 0.7,
+            "max": 0.8
+        },
+        "x3": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 17,
+            "max": 28
+        },
+        "x4": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 7.3,
+            "max": 8.3
+        },
+        "x5": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 7.8,
+            "max": 8.3
+        },
+        "x6": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 2.9,
+            "max": 3.9
+        },
+        "x7": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 5,
+            "max": 5.5
+        }
+    },
+    "tasks": {
+        "f": {
+            "type": "objective"
+        },
+        "c": {
+            "type": "constraint"
+        }
+    }
+}

@@ -1,0 +1,77 @@
+{
+    "language": "PYTHON",
+    "main_file": "rol",
+    "experiment-name": "rol",
+    "acquisition": "PES",
+    "max_finished_jobs": 200,
+    "variables": {
+        "Dm": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 125,
+            "max": 150
+        },
+        "Db": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 10.5,
+            "max": 31.5
+        },
+        "Z": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 4,
+            "max": 50
+        },
+        "fi": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 0.515,
+            "max": 0.6
+        },
+        "fo": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 0.515,
+            "max": 0.6
+        },
+        "KDmin": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 0.4,
+            "max": 0.5
+        },
+        "KDmax": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 0.6,
+            "max": 0.7
+        },
+        "eps": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 0.3,
+            "max": 0.4
+        },
+        "e": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 0.02,
+            "max": 0.1
+        },
+        "xi": {
+            "type": "FLOAT",
+            "size": 1,
+            "min": 0.6,
+            "max": 0.85
+        }
+    },
+    "tasks": {
+        "f": {
+            "type": "objective"
+        },
+        "c": {
+            "type": "constraint"
+        }
+    }
+}
