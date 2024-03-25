@@ -203,11 +203,12 @@ from spearmint.tasks.input_space      import paramify_no_types
 from spearmint.main                   import load_jobs
 
 def main(expt_dir, repeat=-1):
+    repeat = int(repeat)
 
     options         = parse_config_file(expt_dir, 'config.json')
     experiment_name = options["experiment_name"]
 
-    if repeat > 0:
+    if repeat >= 0:
         experiment_name = repeat_experiment_name(experiment_name, repeat)
 
     input_space     = InputSpace(options["variables"])

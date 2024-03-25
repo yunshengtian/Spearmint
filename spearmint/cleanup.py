@@ -190,9 +190,13 @@ import shutil
 from spearmint.utils.parsing import parse_config_file
 from spearmint.utils.parsing import repeat_experiment_name
 from spearmint.utils.parsing import repeat_output_dir
-# from spearmint.utils.database.mongodb import MongoDB
-from spearmint.utils.database.tinydb import TinyDBHandler
-
+from spearmint.utils.database import db_choice
+if db_choice == 'mongodb':
+    from spearmint.utils.database.mongodb import MongoDB
+elif db_choice == 'tinydb':
+    from spearmint.utils.database.tinydb import TinyDBHandler
+else:
+    raise NotImplementedError
 
 def cleanup(path, repeat=-1):
 
@@ -202,11 +206,13 @@ def cleanup(path, repeat=-1):
     cfg = parse_config_file(path, 'config.json', verbose=False)
 
     db_address = cfg['database']['address']  
-    # client = pymongo.MongoClient(db_address)
-    # db         = MongoDB(database_address=db_address)
-    db = TinyDBHandler()
-
     experiment_name = cfg["experiment_name"]
+    if db_choice == 'mongodb':
+        db  = MongoDB(database_address=db_address)
+    elif db_choice == 'tinydb':
+        db  = TinyDBHandler(database_path=f'data/{experiment_name}.json')
+    else:
+        raise NotImplementedError
 
     if repeat >= 0: # only for advanced use
         experiment_name = repeat_experiment_name(experiment_name, repeat)
