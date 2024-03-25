@@ -65,7 +65,7 @@
             "type": "objective"
         },
         "c": {
-            "type": "constraFLOAT"
+            "type": "constraint"
         }
     }
 }
