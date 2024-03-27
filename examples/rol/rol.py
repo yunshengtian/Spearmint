@@ -40,7 +40,7 @@ def main(job_id, params):
         eps * Db - 0.5 * (D - Dm - Db),
     ])
     
-    c = float(np.all(cons >= 0)) - 0.5
+    c = np.all(cons >= 0, axis=0).astype(float) - 0.5
 
     return {'f': objective, 'c': c}
 

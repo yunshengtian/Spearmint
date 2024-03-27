@@ -19,6 +19,6 @@ def main(job_id, params):
     cons = evaluate_slack_true(x1, x2)
     
     # Constraint check; converting to the desired format
-    c = float(cons >= 0) - 0.5
+    c = (cons >= 0).astype(float) - 0.5
 
     return {'f': f, 'c': c}

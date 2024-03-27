@@ -2,6 +2,8 @@ import numpy as np
 
 # Helper function for safe division
 def safe_divide(x1, x2):
+    if np.isscalar(x1):
+        x1 = np.array([x1])
     return np.divide(x1, x2, out=np.zeros_like(x1, dtype=float), where=x2!=0)
 
 i01 = 3.11
@@ -11,7 +13,7 @@ dmax = 220
 eps = 0.5
 
 def evaluate_true(X):
-    n1, n2, n3, n4, n5, n6, p, m1, m2 = X.T
+    n1, n2, n3, n4, n5, n6, p, m1, m2 = X
     n1 = np.clip(np.round(n1), 17, 110)
     n2 = np.clip(np.round(n2), 14, 58)
     n3 = np.clip(np.round(n3), 14, 46)
@@ -30,7 +32,7 @@ def evaluate_true(X):
     return f
 
 def evaluate_slack_true(X):
-    n1, n2, n3, n4, n5, n6, p, m1, m2 = X.T
+    n1, n2, n3, n4, n5, n6, p, m1, m2 = X
     n1 = np.clip(np.round(n1), 17, 110)
     n2 = np.clip(np.round(n2), 14, 58)
     n3 = np.clip(np.round(n3), 14, 46)
@@ -46,16 +48,22 @@ def evaluate_slack_true(X):
     c1 = m2 * (n6 + 2.5) - dmax
     c2 = m1 * (n1 + n2) + m1 * (n2 + 2) - dmax
     c3 = m2 * (n4 + n5) + m2 * (n5 + 2) - dmax
-    # Update c4 to c9 based on the class definition corrections
-    cons = np.array([c1, c2, c3])  # Update with the correct constraint calculations
+    c4 = np.abs(m1 * (n1 + n2) - m2 * (n6 - n3)) - m1 - m2
+    c4 = - ((n1 + n2) * np.sin(safe_divide(np.pi, p)) - n2 -2 - eps)
+    c5 = - ((n6 - n3) * np.sin(safe_divide(np.pi, p)) - n3 -2 - eps)
+    c6 = - ((n4 + n5) * np.sin(safe_divide(np.pi, p)) - n5 -2 - eps)
+    c7 = - ((n6 - n3)**2 + (n4 + n5)**2 - 2 * (n6 - n3) * (n4 + n5) * np.cos(safe_divide(2 * np.pi, p) - beta) - (n3 + n5 + 2 + eps)**2)
+    c8 = - (n6 - 2 * n3 - n4 - 4 - 2 * eps)
+    c9 = - (n6 - n4 - 2 * n5 - 4 - 2 * eps)
+    cons = np.array([c1, c2, c3, c4, c5, c6, c7, c8, c9])  # Update with the correct constraint calculations
     
     return cons
 
 def main(job_id, params):
     X = np.array([params['n1'], params['n2'], params['n3'], params['n4'], params['n5'], params['n6'], params['p'], params['m1'], params['m2']])
-    f = evaluate_true(X.reshape(1, -1))
-    cons = evaluate_slack_true(X.reshape(1, -1))
+    f = evaluate_true(X)
+    cons = evaluate_slack_true(X)
     
-    c = float(np.all(cons <= 0)) - 0.5
+    c = np.all(cons <= 0, axis=0).astype(float) - 0.5
 
-    return {'f': f[0], 'c': c}
+    return {'f': f, 'c': c}

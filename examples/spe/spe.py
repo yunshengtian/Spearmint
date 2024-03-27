@@ -31,7 +31,7 @@ def main(job_id, params):
     ])
     
     # Convert constraints into a single check; all must be >= 0
-    c = float(np.all(cons >= 0)) - 0.5
+    c = np.all(cons >= 0, axis=0).astype(float) - 0.5
 
     return {'f': f, 'c': c}
 

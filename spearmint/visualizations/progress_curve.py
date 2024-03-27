@@ -316,15 +316,6 @@ def main(dirs,
         input_space     = InputSpace(options["variables"])
         chooser_module  = importlib.import_module('spearmint.choosers.' + options['chooser'])
         chooser         = chooser_module.init(input_space, options)
-        if db_choice == 'mongodb':
-            db              = MongoDB(database_address=options['database']['address'])
-        elif db_choice == 'tinydb':
-            db              = TinyDBHandler(database_path=f'data/{experiment_name}.json')
-        else:
-            raise NotImplementedError
-        jobs            = load_jobs(db, experiment_name)
-        hypers          = db.load(experiment_name, 'hypers')
-        tasks           = parse_tasks_from_jobs(jobs, experiment_name, options, input_space)
 
         if rec_type  == "model":
             if mainfile is None:
@@ -371,6 +362,12 @@ def main(dirs,
         # We assume the experiments are stored with the original name plus a hyphen plus the number
         n_repeat = int(n_repeat)
         if n_repeat < 0:
+            if db_choice == 'mongodb':
+                db              = MongoDB(database_address=options['database']['address'])
+            elif db_choice == 'tinydb':
+                db              = TinyDBHandler(database_path=f'data/{experiment_name}.json')
+            else:
+                raise NotImplementedError
             recs = db.load(experiment_name, db_document_name)
             if recs is None:
                 raise Exception("Could not find experiment %s in database at %s" % (experiment_name, options['database']['address']))
@@ -435,8 +432,16 @@ def main(dirs,
                 else:
                     ax['dist'].plot(iters, distances)
         else:
-             # MULTIPLE REPEATS
-            repeat_recs = [db.load(repeat_experiment_name(experiment_name,j),db_document_name) for j in range(n_repeat)]
+            # MULTIPLE REPEATS
+            repeat_recs = []
+            for j in range(n_repeat):
+                if db_choice == 'mongodb':
+                    db              = MongoDB(database_address=options['database']['address'])
+                elif db_choice == 'tinydb':
+                    db              = TinyDBHandler(database_path=f'data/{repeat_experiment_name(experiment_name,j)}.json')
+                else:
+                    raise NotImplementedError
+                repeat_recs.append(db.load(repeat_experiment_name(experiment_name,j),db_document_name))
             if None in repeat_recs:
                 for i, repeat_rec in enumerate(repeat_recs):
                     if repeat_rec is None:
@@ -568,7 +573,7 @@ def main(dirs,
                 if rec_type != "model":
                     values      = np.zeros((n_iter, n_repeat))
                     for j in range(n_repeat):  # loop over repeated experiments
-                        for i in iters[j]:      # loop over iterations
+                        for i in iters:      # loop over iterations
                             if rec_type == "observations":
                                 values[i,j] = repeat_recs[j][i]['obj_o']
                             elif rec_type == "mixed":

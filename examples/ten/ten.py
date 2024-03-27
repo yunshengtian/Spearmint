@@ -18,7 +18,7 @@ def main(job_id, params):
     
     # Combine constraints into a single measure
     # This check passes if all constraints are >= 0
-    c = float(c1 >= 0 and c2 >= 0 and c3 >= 0 and c4 >= 0) - 0.5
+    c = (c1 >= 0 and c2 >= 0 and c3 >= 0 and c4 >= 0).astype(float) - 0.5
 
     return {'f': f, 'c': c}
 

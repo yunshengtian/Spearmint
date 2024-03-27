@@ -12,7 +12,7 @@ def main(job_id, params):
     # Constraint
     cons = x4 * x2**(-2) + x2**(-2) - 1
     # Constraint check; converting to the desired format where -0.5 indicates failure and 0.5 indicates success
-    c = float(-cons >= 0) - 0.5
+    c = (-cons >= 0).astype(float) - 0.5
 
     return {'f': f, 'c': c}
 

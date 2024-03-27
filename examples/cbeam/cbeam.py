@@ -41,9 +41,14 @@ def evaluate_slack_true(X):
     cons[-1] = L_min - sum_l  # Minimum length constraint
     return cons
 
-def main(X):
+def main(job_id, params):
+    X_b = params['b']
+    X_h = params['h']
+    X_l = params['l']
+    X = np.concatenate((X_b, X_h, X_l))
+
     f = evaluate_true(X)
     cons = evaluate_slack_true(X)
     # Constraint satisfaction check
-    c = float(np.all(cons <= 0)) - 0.5
+    c = np.all(cons <= 0, axis=0).astype(float) - 0.5
     return {'f': f, 'c': c}

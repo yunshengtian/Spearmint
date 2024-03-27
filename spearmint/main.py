@@ -293,11 +293,12 @@ def main(expt_dir, config_file="config.json", no_output=False, repeat=-1, load_i
         X = init_data['X']
         Y = -init_data['Y']
         C = init_data['C']
+        X = input_space.from_unit(X)
         for i in range(len(X)):
             init_job = {
                 'id'          : i + 1,
                 'params'      : input_space.paramify(X[i]),
-                'values'      : {'f': Y[i], 'c': C[i]},
+                'values'      : {'f': np.atleast_1d(Y[i]), 'c': np.atleast_1d(C[i])},
                 'expt_dir'    : options['main_file_path'],
                 'tasks'       : ['f', 'c'],
                 'resource'    : options['resource_name'],

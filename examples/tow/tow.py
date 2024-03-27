@@ -17,6 +17,6 @@ def main(job_id, params):
     cons = evaluate_slack_true(x1, x2)
     
     # Constraint check; -0.5 indicates failure, 0.5 indicates success
-    c = float(cons >= 0) - 0.5
+    c = (cons >= 0).astype(float) - 0.5
 
     return {'f': f, 'c': c}
